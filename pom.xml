@@ -17,7 +17,7 @@
 
     <modules>
       <module>spring-cloud-stream-local-acceptance-tests</module>
-      <!--<module>spring-cloud-stream-cf-acceptance-tests</module>-->
+      <module>spring-cloud-stream-cf-acceptance-tests</module>
       <!--<module>spring-cloud-stream-k8s-acceptance-tests</module>-->
     </modules>
 </project>

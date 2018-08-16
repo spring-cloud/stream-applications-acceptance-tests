@@ -15,9 +15,9 @@ import static org.junit.Assert.fail;
 /**
  * @author Soby Chacko
  */
-public class PartitioningAcceptanceTests extends AbstractLocalTests {
+public class PartitioningLocalAcceptanceTests extends AbstractLocalTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(PartitioningAcceptanceTests.class);
+	private static final Logger logger = LoggerFactory.getLogger(PartitioningLocalAcceptanceTests.class);
 
 	@Test
 	public void testPartitioningKafka() throws Exception {

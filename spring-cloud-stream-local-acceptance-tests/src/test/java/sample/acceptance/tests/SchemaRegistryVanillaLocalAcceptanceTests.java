@@ -15,9 +15,9 @@ import static org.junit.Assert.fail;
 /**
  * @author Soby Chacko
  */
-public class SchemaRegistryVanillaTests extends AbstractLocalTests {
+public class SchemaRegistryVanillaLocalAcceptanceTests extends AbstractLocalTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(SchemaRegistryVanillaTests.class);
+	private static final Logger logger = LoggerFactory.getLogger(SchemaRegistryVanillaLocalAcceptanceTests.class);
 
 	@Test
 	public void testSchemaRegistryVanillaKafka() throws Exception {
