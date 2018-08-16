@@ -15,7 +15,7 @@ import static org.junit.Assert.fail;
 /**
  * @author Soby Chacko
  */
-public class PartitioningAcceptanceTests extends AbstractSampleTests {
+public class PartitioningAcceptanceTests extends AbstractLocalTests {
 
 	private static final Logger logger = LoggerFactory.getLogger(PartitioningAcceptanceTests.class);
 

@@ -38,9 +38,9 @@ import static org.junit.Assert.fail;
  *
  * @author Soby Chacko
  */
-public class SampleAcceptanceTests extends AbstractSampleTests {
+public class LocalAcceptanceTests extends AbstractLocalTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(SampleAcceptanceTests.class);
+	private static final Logger logger = LoggerFactory.getLogger(LocalAcceptanceTests.class);
 
 	private Process process;
 

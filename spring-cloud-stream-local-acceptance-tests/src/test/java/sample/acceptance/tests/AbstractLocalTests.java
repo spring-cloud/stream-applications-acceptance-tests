@@ -14,9 +14,9 @@ import static org.junit.Assert.fail;
 /**
  * @author Soby Chacko
  */
-public abstract class AbstractSampleTests {
+public abstract class AbstractLocalTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractSampleTests.class);
+	private static final Logger logger = LoggerFactory.getLogger(AbstractLocalTests.class);
 
 	protected boolean waitForLogEntryInFile(String app, File f, String... entries) {
 		logger.info("Looking for '" + StringUtils.arrayToCommaDelimitedString(entries) + "' in logfile for " + app);
