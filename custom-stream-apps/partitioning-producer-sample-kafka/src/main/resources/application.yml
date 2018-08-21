@@ -7,5 +7,5 @@ spring:
           producer:
             #payload string length - 1 is the partition where it will get stored
             partition-key-expression: headers['partitionKey'] - 1
-            partition-count: 4
+            partition-count: 3
             required-groups: myGroup #only applicable for rabbit

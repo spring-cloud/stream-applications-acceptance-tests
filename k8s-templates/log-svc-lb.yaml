@@ -5,6 +5,7 @@ metadata:
   labels:
     app: log
     component: log
+    type: acceptance-tests
 spec:
   type: LoadBalancer
   ports:

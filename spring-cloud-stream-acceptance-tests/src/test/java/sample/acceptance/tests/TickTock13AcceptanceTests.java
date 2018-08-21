@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 /**
  * @author Soby Chacko
  */
-public class TickTockAcceptanceTests extends AbstractAcceptanceTests {
+public class TickTock13AcceptanceTests extends AbstractAcceptanceTests {
 
 	@Test
 	public void testTickTock13Rabbit() {

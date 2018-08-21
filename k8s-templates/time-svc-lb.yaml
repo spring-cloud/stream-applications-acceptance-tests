@@ -5,6 +5,7 @@ metadata:
   labels:
     app: time
     component: time
+    type: acceptance-tests
 spec:
   type: LoadBalancer
   ports:

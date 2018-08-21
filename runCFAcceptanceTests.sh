@@ -135,7 +135,7 @@ echo "Prepare artifacts for ticktock testing"
 
 prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-./mvnw -P acceptance-tests clean package -Dtest=TickTockAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+./mvnw -P acceptance-tests clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
 
 cf stop ticktock-time-source

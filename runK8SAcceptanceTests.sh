@@ -69,7 +69,26 @@ function prepare_ticktock_latest_with_kafka_binder() {
     FULL_TICKTOCK_LOG_SINK_ROUTE=http://$LOG_SINK_SERVER_URI
 }
 
-function delete_ticktock_components() {
+function prepare_uppercase_transformer_with_kafka_binder() {
+
+   kubectl create -f k8s-templates/uppercase-transformer-kafka.yaml
+   kubectl create -f k8s-templates/uppercase-transformer-kafka-svc-lb.yaml
+
+    READY_FOR_TESTS=1
+    for i in $( seq 1 "${RETRIES}" ); do
+        UPPERCASE_TRANSFORMER_KAFKA_SERVER_URI=$(kubectl get service uppercase-transformer-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
+        [ '<pending>' != $UPPERCASE_TRANSFORMER_KAFKA_SERVER_URI ] && READY_FOR_TESTS=0 && break
+        echo "Waiting for server external ip for time source and log sinks. Attempt  #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds" >&2
+        sleep "${WAIT_TIME}"
+    done
+    UPPERCASE_TRANSFORMER_KAFKA_SERVER_URI=$(kubectl get service uppercase-transformer-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    $(netcat_port ${UPPERCASE_TRANSFORMER_KAFKA_SERVER_URI} 80)
+
+    FULL_UPPERCASE_ROUTE=http://$UPPERCASE_TRANSFORMER_KAFKA_SERVER_URI
+}
+
+function delete_acceptance_test_components() {
 
     kubectl delete pod,deployment,rc,service -l type="acceptance-tests"
 }
@@ -101,14 +120,10 @@ CLUSTER_VERSION=$4
 
 prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
 
-./mvnw  -P acceptance-tests clean package -Dtest=TickTockAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+./mvnw  -P acceptance-tests clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
 
-delete_ticktock_components
-
-delete_kafka_components
-
-delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+delete_acceptance_test_components
 
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
@@ -117,8 +132,39 @@ then
 
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
 
+    delete_kafka_components
+
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+
     exit $BUILD_RETURN_VALUE
 fi
+
+
+prepare_uppercase_transformer_with_kafka_binder
+
+./mvnw  -P acceptance-tests clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+
+BUILD_RETURN_VALUE=$?
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    delete_kafka_components
+
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+delete_kafka_components
+
+delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
 duration=$SECONDS
 

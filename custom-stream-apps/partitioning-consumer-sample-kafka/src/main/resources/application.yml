@@ -4,7 +4,7 @@ spring:
       kafka:
         binder:
           autoAddPartitions: true
-          minPartitionCount: 4
+          minPartitionCount: 3
       bindings:
         input:
           destination: partitioned.destination

@@ -29,7 +29,7 @@ public class Producer {
 				"f", "g", "h", //making them go to partition-0 by making a single char string
 				"fo", "go", "ho",
 				"foo", "goo", "hoo",
-				"fooz", "gooz", "hooz"
+				//"fooz", "gooz", "hooz"
 		};
 
 		@InboundChannelAdapter(channel = Source.OUTPUT, poller = @Poller(fixedRate = "1000"))
