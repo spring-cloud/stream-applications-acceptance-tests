@@ -6,7 +6,7 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>io.spring.cloud.stream.sample:uppercase-transformer-kafka</include>
+                <include>io.spring.cloud.stream.acceptance:uppercase-transformer-kafka</include>
             </includes>
             <outputDirectory>.</outputDirectory>
             <outputFileNameMapping>uppercase-transformer-kafka.jar</outputFileNameMapping>

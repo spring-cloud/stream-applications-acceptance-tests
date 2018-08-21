@@ -6,7 +6,7 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>io.spring.cloud.stream.sample:partitioning-consumer-sample-kafka</include>
+                <include>io.spring.cloud.stream.acceptance:partitioning-consumer-sample-kafka</include>
             </includes>
             <outputDirectory>.</outputDirectory>
             <outputFileNameMapping>partitioning-consumer-sample-kafka.jar</outputFileNameMapping>

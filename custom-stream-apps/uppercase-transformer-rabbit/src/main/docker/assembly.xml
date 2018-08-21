@@ -6,7 +6,7 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>io.spring.cloud.stream.sample:uppercase-transformer-rabbit</include>
+                <include>io.spring.cloud.stream.acceptance:uppercase-transformer-rabbit</include>
             </includes>
             <outputDirectory>.</outputDirectory>
             <outputFileNameMapping>uppercase-transformer-rabbit.jar</outputFileNameMapping>

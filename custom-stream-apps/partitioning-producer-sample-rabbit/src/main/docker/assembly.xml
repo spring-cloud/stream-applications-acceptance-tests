@@ -6,7 +6,7 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>io.spring.cloud.stream.sample:partitioning-producer-sample-rabbit</include>
+                <include>io.spring.cloud.stream.acceptance:partitioning-producer-sample-rabbit</include>
             </includes>
             <outputDirectory>.</outputDirectory>
             <outputFileNameMapping>partitioning-producer-sample-rabbit.jar</outputFileNameMapping>
