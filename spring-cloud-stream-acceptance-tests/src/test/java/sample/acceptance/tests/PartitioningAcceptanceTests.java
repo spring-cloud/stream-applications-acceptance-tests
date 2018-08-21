@@ -34,9 +34,9 @@ import static org.junit.Assert.fail;
  *
  * @author Soby Chacko
  */
-public class PartitioningCFAcceptanceTests extends AbstractCFAcceptanceTests {
+public class PartitioningAcceptanceTests extends AbstractAcceptanceTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(PartitioningCFAcceptanceTests.class);
+	private static final Logger logger = LoggerFactory.getLogger(PartitioningAcceptanceTests.class);
 
 	@Test
 	public void testPartitioningWith4ConsumersRabbit() throws Exception {

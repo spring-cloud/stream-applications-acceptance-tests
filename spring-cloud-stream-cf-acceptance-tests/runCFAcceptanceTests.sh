@@ -48,7 +48,7 @@ function prepare_ticktock_13_with_rabbit_binder() {
 
 function prepare_uppercase_transformer_with_rabbit_binder() {
 
-    wget -O /tmp/uppercase-transformer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/sample/uppercase-transformer/0.0.1-SNAPSHOT/uppercase-transformer-0.0.1-SNAPSHOT-rabbit.jar
+    wget -O /tmp/uppercase-transformer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/sample/uppercase-transformer-rabbit/0.0.1-SNAPSHOT/uppercase-transformer-rabbit-0.0.1-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -68,8 +68,8 @@ function prepare_uppercase_transformer_with_rabbit_binder() {
 
 function prepare_partitioning_test_with_rabbit_binder() {
 
-    wget -O /tmp/partitioning-producer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/sample/partitioning-producer/0.0.1-SNAPSHOT/partitioning-producer-0.0.1-SNAPSHOT-rabbit.jar
-    wget -O /tmp/partitioning-consumer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/sample/partitioning-consumer-rabbit/0.0.1-SNAPSHOT/partitioning-consumer-rabbit-0.0.1-SNAPSHOT.jar
+    wget -O /tmp/partitioning-producer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/partitioning-producer-sample-rabbit/0.0.1-SNAPSHOT/partitioning-producer-sample-rabbit-0.0.1-SNAPSHOT.jar
+    wget -O /tmp/partitioning-consumer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/partitioning-consumer-sample-rabbit/0.0.1-SNAPSHOT/partitioning-consumer-sample-rabbit-0.0.1-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -118,13 +118,13 @@ function prepare_partitioning_test_with_rabbit_binder() {
 
     #consumer 4
 
-    cf push -f ./manifests/partitioning-consumer4-manifest.yml
-
-    cf app partitioning-consumer4 > /tmp/part-consumer4-route.txt
-
-    PARTITIONING_CONSUMER4_ROUTE=`grep routes /tmp/part-consumer4-route.txt | awk '{ print $2 }'`
-
-    FULL_PARTITIONING_CONSUMER4_ROUTE=http://$PARTITIONING_CONSUMER4_ROUTE
+#    cf push -f ./manifests/partitioning-consumer4-manifest.yml
+#
+#    cf app partitioning-consumer4 > /tmp/part-consumer4-route.txt
+#
+#    PARTITIONING_CONSUMER4_ROUTE=`grep routes /tmp/part-consumer4-route.txt | awk '{ print $2 }'`
+#
+#    FULL_PARTITIONING_CONSUMER4_ROUTE=http://$PARTITIONING_CONSUMER4_ROUTE
 }
 
 #Main script starting
@@ -135,7 +135,7 @@ echo "Prepare artifacts for ticktock testing"
 
 prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-./mvnw clean package -Dtest=TickTockAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+./mvnw clean package -Dtest=TickTockCFAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
 
 cf stop ticktock-time-source
@@ -163,7 +163,7 @@ echo "Prepare artifacts for uppercase transformer testing"
 
 prepare_uppercase_transformer_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-./mvnw clean package -Dtest=SimpleProcessorTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+./mvnw clean package -Dtest=UppercaseTransformerCFAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
 BUILD_RETURN_VALUE=$?
 
 cf stop uppercase-transformer
@@ -188,20 +188,21 @@ echo "Prepare artifacts for partitions testing"
 
 prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-./mvnw clean package -Dtest=PartitionAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE -Dpartitioning.consumer4.route=$FULL_PARTITIONING_CONSUMER4_ROUTE
+./mvnw clean package -Dtest=PartitioningCFAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
+#./mvnw clean package -Dtest=PartitioningCFAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE -Dpartitioning.consumer4.route=$FULL_PARTITIONING_CONSUMER4_ROUTE
 BUILD_RETURN_VALUE=$?
 
 cf stop partitioning-producer
 cf stop partitioning-consumer1
 cf stop partitioning-consumer2
 cf stop partitioning-consumer3
-cf stop partitioning-consumer4
+#cf stop partitioning-consumer4
 
 cf delete partitioning-producer -f
 cf delete partitioning-consumer1 -f
 cf delete partitioning-consumer2 -f
 cf delete partitioning-consumer3 -f
-cf delete partitioning-consumer4 -f
+#cf delete partitioning-consumer4 -f
 
 cf logout
 
@@ -209,7 +210,7 @@ rm /tmp/part-producer-route.txt
 rm /tmp/part-consumer1-route.txt
 rm /tmp/part-consumer2-route.txt
 rm /tmp/part-consumer3-route.txt
-rm /tmp/part-consumer4-route.txt
+#rm /tmp/part-consumer4-route.txt
 
 duration=$SECONDS
 

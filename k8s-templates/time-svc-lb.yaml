@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: time
+  labels:
+    app: time
+    component: time
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    name: time-port
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: time
+    component: time

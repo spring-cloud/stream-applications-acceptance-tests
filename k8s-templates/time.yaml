@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: time
+  labels:
+    app: time
+    type: acceptance-tests
+    component: time
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: time
+        component: time 
+    spec:
+      containers:
+      - name: time
+        image: springcloudstream/time-source-kafka:latest 
+        ports:
+        - containerPort: 8080
+        env:
+          - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+            value: kafka:9092
+          - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
+            value: kafka-zk:2181
+          - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
+            value: foo
+          - name: LOGGING_FILE
+            value: time-source.log
+          - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+            value: logfile,health,info
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /actuator/info
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10

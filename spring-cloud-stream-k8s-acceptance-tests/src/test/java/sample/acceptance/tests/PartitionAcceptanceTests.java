@@ -34,9 +34,9 @@ import static org.junit.Assert.fail;
  *
  * @author Soby Chacko
  */
-public class PartitioningCFAcceptanceTests extends AbstractCFAcceptanceTests {
+public class PartitionAcceptanceTests extends AbstractK8SAcceptanceTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(PartitioningCFAcceptanceTests.class);
+	private static final Logger logger = LoggerFactory.getLogger(PartitionAcceptanceTests.class);
 
 	@Test
 	public void testPartitioningWith4ConsumersRabbit() throws Exception {
@@ -53,7 +53,7 @@ public class PartitioningCFAcceptanceTests extends AbstractCFAcceptanceTests {
 		String consumer1Url = System.getProperty("partitioning.consumer1.route");
 		String consumer2Url = System.getProperty("partitioning.consumer2.route");
 		String consumer3Url = System.getProperty("partitioning.consumer3.route");
-		//String consumer4Url = System.getProperty("partitioning.consumer4.route");
+		String consumer4Url = System.getProperty("partitioning.consumer4.route");
 
 		Future<?> future1 = verifyPartitions("Partitioning Consumer-1", consumer1Url,
 				"f received from partition partitioned.destination.myGroup-0",
@@ -67,12 +67,12 @@ public class PartitioningCFAcceptanceTests extends AbstractCFAcceptanceTests {
 				"foo received from partition partitioned.destination.myGroup-2",
 				"goo received from partition partitioned.destination.myGroup-2",
 				"hoo received from partition partitioned.destination.myGroup-2");
-//		Future<?> future4 = verifyPartitions("Partitioning Consumer-4",consumer4Url,
-//				"fooz received from partition partitioned.destination.myGroup-3",
-//				"gooz received from partition partitioned.destination.myGroup-3",
-//				"hooz received from partition partitioned.destination.myGroup-3");
+		Future<?> future4 = verifyPartitions("Partitioning Consumer-4",consumer4Url,
+				"fooz received from partition partitioned.destination.myGroup-3",
+				"gooz received from partition partitioned.destination.myGroup-3",
+				"hooz received from partition partitioned.destination.myGroup-3");
 
-		verifyResults(future1, future2, future3);
+		verifyResults(future1, future2, future3, future4);
 	}
 
 	private Future<?> verifyPartitions(String consumer1Msg, String consumerRoute,

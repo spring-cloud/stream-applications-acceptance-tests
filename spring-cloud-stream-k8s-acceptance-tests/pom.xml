@@ -2,11 +2,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-cloud-stream-cf-acceptance-tests</artifactId>
+    <artifactId>spring-cloud-stream-k8s-acceptance-tests</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>spring-cloud-stream-cf-acceptance-tests</name>
-    <description>Spring Cloud Stream CF Acceptance Tests</description>
+    <name>spring-cloud-stream-k8s-acceptance-tests</name>
+    <description>Spring Cloud Stream K8S Acceptance Tests</description>
 
     <parent>
         <groupId>io.spring.cloud.stream.acceptance</groupId>
