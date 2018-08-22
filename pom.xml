@@ -28,13 +28,5 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>acceptance-tests</id>
-            <modules>
-                <module>spring-cloud-stream-acceptance-tests</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>
 
