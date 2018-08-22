@@ -5,6 +5,10 @@ spring:
         binder:
           autoAddPartitions: true
           minPartitionCount: 3
+        bindings:
+          input:
+            consumer:
+              autoRebalanceEnabled: false
       bindings:
         input:
           destination: partitioned.destination
@@ -13,4 +17,3 @@ spring:
             partitioned: true
             instanceIndex: 0
             instanceCount: 3
-            autoRebalanceEnabled: false
