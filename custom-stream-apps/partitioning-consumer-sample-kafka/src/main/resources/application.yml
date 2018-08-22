@@ -9,3 +9,8 @@ spring:
         input:
           destination: partitioned.destination
           group: myGroup
+          consumer:
+            partitioned: true
+            instanceIndex: 0
+            instanceCount: 3
+            autoRebalanceEnabled: false

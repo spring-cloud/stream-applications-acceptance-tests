@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: partitioning-consumer2-sample-kafka
+  labels:
+    app: partitioning-consumer2-sample-kafka
+    type: acceptance-tests
+    component: partitioning-consumer2-sample-kafka
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    name: partitioning-consumer2-sample-kafka-port
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: partitioning-consumer2-sample-kafka 
+    type: acceptance-tests
+    component: partitioning-consumer2-sample-kafka
