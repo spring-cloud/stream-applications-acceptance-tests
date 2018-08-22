@@ -122,6 +122,8 @@ function prepare_partitioning_test_with_rabbit_binder() {
 
 SECONDS=0
 
+set -e
+
 echo "Prepare artifacts for ticktock testing"
 
 prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6

@@ -151,8 +151,6 @@ function delete_test_cluster()  {
 
 SECONDS=0
 
-#echo "Prepare artifacts for ticktock testing"
-#
 WAIT_TIME="${WAIT_TIME:-5}"
 RETRIES="${RETRIES:-60}"
 
@@ -160,6 +158,8 @@ PROJECT_NAME=$1
 CLUSTER_NAME=$2
 GKE_ZONE=$3
 CLUSTER_VERSION=$4
+
+set -e
 
 prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
 
