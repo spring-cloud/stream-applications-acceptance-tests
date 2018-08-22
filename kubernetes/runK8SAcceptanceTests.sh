@@ -90,25 +90,6 @@ function prepare_uppercase_transformer_with_kafka_binder() {
 
 function prepare_partitioning_test_with_kafka_binder() {
 
-grep $CLUSTER_NAME ~/.kube/config
-    grep_result=$?
-    if [ $grep_result = 0 ]; then
-        kubectl config delete-context $CLUSTER_NAME
-    fi
-
-    gcloud container --project ${PROJECT_NAME} clusters create ${CLUSTER_NAME} --zone ${GKE_ZONE} --machine-type "custom-2-4096" \
-    --cluster-version ${CLUSTER_VERSION} --num-nodes "2" --image-type "COS" --disk-size "25" --network "default" \
-    --enable-cloud-logging --enable-cloud-monitoring \
-    --scopes "https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append"
-
-    gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${GKE_ZONE} --project ${PROJECT_NAME}
-
-    kubectl create -f k8s-templates/kafka-zk-deployment.yaml
-    kubectl create -f k8s-templates/kafka-zk-svc.yaml
-
-    kubectl create -f k8s-templates/kafka-deployment.yaml
-    kubectl create -f k8s-templates/kafka-svc.yaml
-
     kubectl create -f k8s-templates/partitioning-consumer1-sample-kafka.yaml
     kubectl create -f k8s-templates/partitioning-consumer1-sample-kafka-svc-lb.yaml
 
@@ -179,57 +160,65 @@ PROJECT_NAME=$1
 CLUSTER_NAME=$2
 GKE_ZONE=$3
 CLUSTER_VERSION=$4
-#
-#prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
-#
-#./mvnw  -P acceptance-tests clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#delete_acceptance_test_components
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    delete_kafka_components
-#
-#    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#
-#prepare_uppercase_transformer_with_kafka_binder
-#
-#./mvnw  -P acceptance-tests clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
-#
-#BUILD_RETURN_VALUE=$?
-#
-#delete_acceptance_test_components
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    delete_kafka_components
-#
-#    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
 
+prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    delete_kafka_components
+
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+prepare_uppercase_transformer_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    delete_kafka_components
+
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+
+    exit $BUILD_RETURN_VALUE
+fi
 
 prepare_partitioning_test_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
 
-./mvnw -P acceptance-tests clean package -Dtest=PartitioningKafkaAcceptanceTests -Dmaven.test.skip=false -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
+pushd ../spring-cloud-stream-acceptance-tests
 
+../mvnw clean package -Dtest=PartitioningKafkaAcceptanceTests -Dmaven.test.skip=false -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
 BUILD_RETURN_VALUE=$?
+
+popd
 
 delete_acceptance_test_components
 

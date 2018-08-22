@@ -26,24 +26,19 @@ public class PartitioningKafkaAcceptanceTests extends AbstractAcceptanceTests {
         String consumer1Url = System.getProperty("partitioning.consumer1.route");
         String consumer2Url = System.getProperty("partitioning.consumer2.route");
         String consumer3Url = System.getProperty("partitioning.consumer3.route");
-        //String consumer4Url = System.getProperty("partitioning.consumer4.route");
 
         Future<?> future1 = verifyPartitions("Partitioning Consumer-1", consumer1Url,
                 "f received from partition 0",
                 "g received from partition 0",
                 "h received from partition 0");
         Future<?> future2 = verifyPartitions("Partitioning Consumer-2", consumer2Url,
-                "fo received from 1",
+                "fo received from partition 1",
                 "go received from partition 1",
                 "ho received from partition 1");
         Future<?> future3 = verifyPartitions("Partitioning Consumer-3", consumer3Url,
-                "foo received from 2",
-                "goo received from 2",
+                "foo received from partition 2",
+                "goo received from partition 2",
                 "hoo received from partition 2");
-//		Future<?> future4 = verifyPartitions("Partitioning Consumer-4",consumer4Url,
-//				"fooz received from partition partitioned.destination.myGroup-3",
-//				"gooz received from partition partitioned.destination.myGroup-3",
-//				"hooz received from partition partitioned.destination.myGroup-3");
 
         verifyResults(future1, future2, future3);
     }
@@ -55,22 +50,6 @@ public class PartitioningKafkaAcceptanceTests extends AbstractAcceptanceTests {
 
         Future<?> submit = executorService.submit(() -> {
             boolean found = waitForLogEntry(consumerMsg, consumerRoute, entries);
-//            if (found) {
-//                partitions.add(consumerRoute);
-//            }
-//            if (!found) {
-//                found = waitForLogEntry(consumerMsg, consumer2Route, entries);
-//                if (found) {
-//                    partitions.add(consumer2Route);
-//                }
-//            }
-//            if (!found) {
-//                found = waitForLogEntry(consumerMsg, consumer3Route, entries);
-//                if (found) {
-//                    partitions.add(consumer3Route);
-//                }
-//            }
-
             if (!found) {
                 fail("Could not find the test data in the logs");
             }

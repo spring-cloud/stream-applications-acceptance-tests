@@ -116,15 +116,6 @@ function prepare_partitioning_test_with_rabbit_binder() {
 
     FULL_PARTITIONING_CONSUMER3_ROUTE=http://$PARTITIONING_CONSUMER3_ROUTE
 
-#    #consumer 4
-#
-#    cf push -f ./cf-manifests/partitioning-consumer4-manifest.yml
-#
-#    cf app partitioning-consumer4 > /tmp/part-consumer4-route.txt
-#
-#    PARTITIONING_CONSUMER4_ROUTE=`grep routes /tmp/part-consumer4-route.txt | awk '{ print $2 }'`
-#
-#    FULL_PARTITIONING_CONSUMER4_ROUTE=http://$PARTITIONING_CONSUMER4_ROUTE
 }
 
 #Main script starting
@@ -135,8 +126,12 @@ echo "Prepare artifacts for ticktock testing"
 
 prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-./mvnw -P acceptance-tests clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
+
+popd
 
 cf stop ticktock-time-source
 cf stop ticktock-log-sink
@@ -163,8 +158,12 @@ echo "Prepare artifacts for uppercase transformer testing"
 
 prepare_uppercase_transformer_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-./mvnw -P acceptance-tests clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
 BUILD_RETURN_VALUE=$?
+
+popd
 
 cf stop uppercase-transformer
 
@@ -188,21 +187,22 @@ echo "Prepare artifacts for partitions testing"
 
 prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-#./mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE -Dpartitioning.consumer4.route=$FULL_PARTITIONING_CONSUMER4_ROUTE
-./mvnw -P acceptance-tests clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
 BUILD_RETURN_VALUE=$?
+
+popd
 
 cf stop partitioning-producer
 cf stop partitioning-consumer1
 cf stop partitioning-consumer2
 cf stop partitioning-consumer3
-#cf stop partitioning-consumer4
 
 cf delete partitioning-producer -f
 cf delete partitioning-consumer1 -f
 cf delete partitioning-consumer2 -f
 cf delete partitioning-consumer3 -f
-#cf delete partitioning-consumer4 -f
 
 cf logout
 
@@ -210,7 +210,6 @@ rm /tmp/part-producer-route.txt
 rm /tmp/part-consumer1-route.txt
 rm /tmp/part-consumer2-route.txt
 rm /tmp/part-consumer3-route.txt
-#rm /tmp/part-consumer4-route.txt
 
 duration=$SECONDS
 

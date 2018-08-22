@@ -28,25 +28,7 @@
         </dependency>
     </dependencies>
 
-    <!--<modules>-->
-        <!--<module>custom-stream-apps</module>-->
-        <!--<module>spring-cloud-stream-acceptance-tests</module>-->
-      <!--&lt;!&ndash;<module>spring-cloud-stream-local-acceptance-tests</module>&ndash;&gt;-->
-      <!--&lt;!&ndash;<module>spring-cloud-stream-cf-acceptance-tests</module>&ndash;&gt;-->
-      <!--&lt;!&ndash;<module>spring-cloud-stream-k8s-acceptance-tests</module>&ndash;&gt;-->
-    <!--</modules>-->
-
     <profiles>
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <modules>
-                <module>custom-stream-apps</module>
-                <module>spring-cloud-stream-acceptance-tests</module>
-            </modules>
-        </profile>
         <profile>
             <id>acceptance-tests</id>
             <modules>
