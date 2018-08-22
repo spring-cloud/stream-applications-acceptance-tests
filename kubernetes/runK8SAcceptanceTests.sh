@@ -159,8 +159,6 @@ CLUSTER_NAME=$2
 GKE_ZONE=$3
 CLUSTER_VERSION=$4
 
-set -e
-
 prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
 
 pushd ../spring-cloud-stream-acceptance-tests
