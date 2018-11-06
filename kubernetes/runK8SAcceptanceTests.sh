@@ -229,14 +229,14 @@ then
 
     delete_kafka_components
 
-    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+    #delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
     exit $BUILD_RETURN_VALUE
 fi
 
 delete_kafka_components
 
-delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+#delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
 duration=$SECONDS
 
