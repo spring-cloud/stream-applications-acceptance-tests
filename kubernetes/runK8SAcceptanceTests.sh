@@ -178,8 +178,8 @@ then
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
 
     delete_kafka_components
-
-    #delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+    sleep 60
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
     exit $BUILD_RETURN_VALUE
 fi
@@ -203,8 +203,8 @@ then
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
 
     delete_kafka_components
-
-    #delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+    sleep 60
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
     exit $BUILD_RETURN_VALUE
 fi
@@ -228,15 +228,15 @@ then
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
 
     delete_kafka_components
-
-    #delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+    sleep 60
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
     exit $BUILD_RETURN_VALUE
 fi
 
 delete_kafka_components
-
-#delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+sleep 60
+delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
 
 duration=$SECONDS
 
