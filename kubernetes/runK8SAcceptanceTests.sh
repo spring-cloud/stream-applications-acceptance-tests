@@ -159,55 +159,55 @@ CLUSTER_NAME=$2
 GKE_ZONE=$3
 CLUSTER_VERSION=$4
 
-prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
-
-pushd ../spring-cloud-stream-acceptance-tests
-
-../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
-BUILD_RETURN_VALUE=$?
-
-popd
-
-delete_acceptance_test_components
-
-if [ "$BUILD_RETURN_VALUE" != 0 ]
-then
-    echo "Early exit due to test failure in ticktock tests"
-    duration=$SECONDS
-
-    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-
-    delete_kafka_components
-    sleep 60
-    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
-
-    exit $BUILD_RETURN_VALUE
-fi
-
-prepare_uppercase_transformer_with_kafka_binder
-
-pushd ../spring-cloud-stream-acceptance-tests
-
-../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
-BUILD_RETURN_VALUE=$?
-
-popd
-
-delete_acceptance_test_components
-
-if [ "$BUILD_RETURN_VALUE" != 0 ]
-then
-    echo "Early exit due to test failure in ticktock tests"
-    duration=$SECONDS
-
-    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-
-    delete_kafka_components
-    sleep 60
-    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
-
-    exit $BUILD_RETURN_VALUE
-fi
+#prepare_ticktock_latest_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
+#
+#pushd ../spring-cloud-stream-acceptance-tests
+#
+#../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+#BUILD_RETURN_VALUE=$?
+#
+#popd
+#
+#delete_acceptance_test_components
+#
+#if [ "$BUILD_RETURN_VALUE" != 0 ]
+#then
+#    echo "Early exit due to test failure in ticktock tests"
+#    duration=$SECONDS
+#
+#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+#
+#    delete_kafka_components
+#    sleep 60
+#    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+#
+#    exit $BUILD_RETURN_VALUE
+#fi
+#
+#prepare_uppercase_transformer_with_kafka_binder
+#
+#pushd ../spring-cloud-stream-acceptance-tests
+#
+#../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+#BUILD_RETURN_VALUE=$?
+#
+#popd
+#
+#delete_acceptance_test_components
+#
+#if [ "$BUILD_RETURN_VALUE" != 0 ]
+#then
+#    echo "Early exit due to test failure in ticktock tests"
+#    duration=$SECONDS
+#
+#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+#
+#    delete_kafka_components
+#    sleep 60
+#    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+#
+#    exit $BUILD_RETURN_VALUE
+#fi
 
 prepare_partitioning_test_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
 
