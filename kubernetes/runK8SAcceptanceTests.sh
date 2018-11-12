@@ -209,30 +209,30 @@ then
     exit $BUILD_RETURN_VALUE
 fi
 
-#prepare_partitioning_test_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=PartitioningKafkaAcceptanceTests -Dmaven.test.skip=false -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#delete_acceptance_test_components
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    delete_kafka_components
-#    sleep 60
-#    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
+prepare_partitioning_test_with_kafka_binder ${PROJECT_NAME} ${CLUSTER_NAME} ${GKE_ZONE} ${CLUSTER_VERSION}
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=PartitioningKafkaAcceptanceTests -Dmaven.test.skip=false -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    delete_kafka_components
+    sleep 60
+    delete_test_cluster ${CLUSTER_NAME} ${GKE_ZONE} ${PROJECT_NAME}
+
+    exit $BUILD_RETURN_VALUE
+fi
 
 delete_kafka_components
 sleep 60
