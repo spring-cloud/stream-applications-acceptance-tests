@@ -13,11 +13,11 @@ spec:
       labels:
         app: uppercase-transformer-kafka
         type: acceptance-tests
-        component: uppercase-transformer-kafka 
+        component: uppercase-transformer-kafka
     spec:
       containers:
       - name: uppercase-transformer
-        image: springcloudstream/uppercase-transformer-kafka:latest 
+        image: springcloudstream/uppercase-transformer-kafka:latest
         ports:
         - containerPort: 8080
         env:
@@ -29,6 +29,8 @@ spec:
             value: uppercase-transformer-kafka.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
+          - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+            value: false
         livenessProbe:
           httpGet:
             path: /actuator/health

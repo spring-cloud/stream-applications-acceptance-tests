@@ -13,11 +13,11 @@ spec:
       labels:
         app: partitioning-consumer3-sample-kafka
         type: acceptance-tests
-        component: partitioning-consumer3-sample-kafka 
+        component: partitioning-consumer3-sample-kafka
     spec:
       containers:
       - name: partitioning-consumer3-sample
-        image: springcloudstream/partitioning-consumer-sample-kafka:latest 
+        image: springcloudstream/partitioning-consumer-sample-kafka:latest
         ports:
         - containerPort: 8080
         env:
@@ -31,6 +31,8 @@ spec:
             value: partitioning-consumer3-sample-kafka.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
+          - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+            value: false
         livenessProbe:
           httpGet:
             path: /actuator/health

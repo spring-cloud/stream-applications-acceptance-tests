@@ -12,11 +12,11 @@ spec:
     metadata:
       labels:
         app: time
-        component: time 
+        component: time
     spec:
       containers:
       - name: time
-        image: springcloudstream/time-source-kafka:latest 
+        image: springcloudstream/time-source-kafka:latest
         ports:
         - containerPort: 8080
         env:
@@ -30,6 +30,8 @@ spec:
             value: time-source.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
+          - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+            value: false
         livenessProbe:
           httpGet:
             path: /actuator/health

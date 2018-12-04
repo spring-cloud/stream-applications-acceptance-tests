@@ -12,11 +12,11 @@ spec:
     metadata:
       labels:
         app: log
-        component: log 
+        component: log
     spec:
       containers:
       - name: log
-        image: springcloudstream/log-sink-kafka:latest 
+        image: springcloudstream/log-sink-kafka:latest
         ports:
         - containerPort: 8080
         env:
@@ -32,6 +32,8 @@ spec:
             value: log-sink.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
+          - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+            value: false
         livenessProbe:
           httpGet:
             path: /actuator/health
