@@ -1,0 +1,14 @@
+---
+applications:
+- name: ticktock-time-source131
+  host: ticktock-time-source131
+  memory: 2G
+  disk_quota: 2G
+  instances: 1
+  path: /tmp/ticktock-time-source131.jar
+  env:
+    logging.file: ticktocktime131.log
+    endpoints.logfile.sensitive: false
+    spring.cloud.stream.bindings.output.destination: ticktock131
+services:
+- scst-rabbit

@@ -16,11 +16,11 @@ popd () {
     command popd "$@" > /dev/null
 }
 
-function prepare_ticktock_13_with_rabbit_binder() {
+function prepare_ticktock_latest_with_rabbit_binder() {
 
-    wget -O /tmp/ticktock-time-source.jar http://repo.spring.io/release/org/springframework/cloud/stream/app/time-source-rabbit/1.3.1.RELEASE/time-source-rabbit-1.3.1.RELEASE.jar
+    wget -O /tmp/ticktock-time-source.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/time-source-rabbit/2.1.0.BUILD-SNAPSHOT/time-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/ticktock-log-sink.jar http://repo.spring.io/release/org/springframework/cloud/stream/app/log-sink-rabbit/1.3.1.RELEASE/log-sink-rabbit-1.3.1.RELEASE.jar
+    wget -O /tmp/ticktock-log-sink.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -39,11 +39,41 @@ function prepare_ticktock_13_with_rabbit_binder() {
 
     cf push -f ./cf-manifests/log-sink-manifest.yml
 
-    cf app ticktock-log-sink > /tmp/ticktock-log-sink-route.txt
+    cf app ticktock-log-sink131 > /tmp/ticktock-log-sink-route.txt
 
     TICKTOCK_LOG_SINK_ROUTE=`grep routes /tmp/ticktock-log-sink-route.txt | awk '{ print $2 }'`
 
     FULL_TICKTOCK_LOG_SINK_ROUTE=http://$TICKTOCK_LOG_SINK_ROUTE
+}
+
+function prepare_ticktock_13_with_rabbit_binder() {
+
+    wget -O /tmp/ticktock-time-source131.jar http://repo.spring.io/release/org/springframework/cloud/stream/app/time-source-rabbit/1.3.1.RELEASE/time-source-rabbit-1.3.1.RELEASE.jar
+
+    wget -O /tmp/ticktock-log-sink131.jar http://repo.spring.io/release/org/springframework/cloud/stream/app/log-sink-rabbit/1.3.1.RELEASE/log-sink-rabbit-1.3.1.RELEASE.jar
+
+    if [ $6 == "skip-ssl-validation" ]
+    then
+        cf login -a $1 --skip-ssl-validation -u $2 -p $3 -o $4 -s $5
+    else
+        cf login -a $1 -u $2 -p $3 -o $4 -s $5
+    fi
+
+    cf push -f ./cf-manifests/time-source-manifest131.yml
+
+    cf app ticktock-time-source131 > /tmp/ticktock-time-source-route131.txt
+
+    TICKTOCK_TIME_SOURCE_ROUTE_131=`grep routes /tmp/ticktock-time-source-route131.txt | awk '{ print $2 }'`
+
+    FULL_TICKTOCK_TIME_SOURCE_ROUTE_131=http://$TICKTOCK_TIME_SOURCE_ROUTE_131
+
+    cf push -f ./cf-manifests/log-sink-manifest131.yml
+
+    cf app ticktock-log-sink131 > /tmp/ticktock-log-sink-route131.txt
+
+    TICKTOCK_LOG_SINK_ROUTE_131=`grep routes /tmp/ticktock-log-sink-route131.txt | awk '{ print $2 }'`
+
+    FULL_TICKTOCK_LOG_SINK_ROUTE_131=http://$TICKTOCK_LOG_SINK_ROUTE_131
 }
 
 function prepare_uppercase_transformer_with_rabbit_binder() {
@@ -124,11 +154,11 @@ SECONDS=0
 
 echo "Prepare artifacts for ticktock testing"
 
-prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
+prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
 pushd ../spring-cloud-stream-acceptance-tests
 
-../mvnw clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
 
 popd
@@ -143,6 +173,39 @@ cf logout
 
 rm /tmp/ticktock-time-source-route.txt
 rm /tmp/ticktock-log-sink-route.txt
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+
+echo "Prepare artifacts for ticktock1.3.1 testing"
+
+prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE_131 -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE_131
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop ticktock-time-source131
+cf stop ticktock-log-sink131
+
+cf delete ticktock-time-source131 -f
+cf delete ticktock-log-sink131 -f
+
+cf logout
+
+rm /tmp/ticktock-time-source-route131.txt
+rm /tmp/ticktock-log-sink-route131.txt
 
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then

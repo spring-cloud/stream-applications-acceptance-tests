@@ -7,12 +7,9 @@ applications:
   instances: 1
   path: /tmp/ticktock-time-source.jar
   env:
-#    LOGGING_FILE: ticktocktime.log
-#    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: logfile
-#    ENDPOINTS_LOGFILE_SENSITIVE: false
-    logging.file: ticktocklog.log
-    endpoints.logfile.sensitive: false
-    #SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION: ticktock
-    spring.cloud.stream.bindings.output.destination: ticktock
+    LOGGING_FILE: ticktocktime.log
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: logfile,health,info
+    SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED: false
+    SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION: ticktock
 services:
 - scst-rabbit
