@@ -39,7 +39,7 @@ function prepare_ticktock_latest_with_rabbit_binder() {
 
     cf push -f ./cf-manifests/log-sink-manifest.yml
 
-    cf app ticktock-log-sink131 > /tmp/ticktock-log-sink-route.txt
+    cf app ticktock-log-sink > /tmp/ticktock-log-sink-route.txt
 
     TICKTOCK_LOG_SINK_ROUTE=`grep routes /tmp/ticktock-log-sink-route.txt | awk '{ print $2 }'`
 
