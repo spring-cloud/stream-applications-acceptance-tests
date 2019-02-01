@@ -16,6 +16,46 @@ popd () {
     command popd "$@" > /dev/null
 }
 
+function prepare_http_splitter_log_with_rabbit_binder() {
+
+    wget -O /tmp/http-source.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+
+    wget -O /tmp/splitter-processor.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/splitter-processor-rabbit/2.1.0.BUILD-SNAPSHOT/splitter-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+
+    wget -O /tmp/httpsplitter-log-sink.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+
+    if [ $6 == "skip-ssl-validation" ]
+    then
+        cf login -a $1 --skip-ssl-validation -u $2 -p $3 -o $4 -s $5
+    else
+        cf login -a $1 -u $2 -p $3 -o $4 -s $5
+    fi
+
+    cf push -f ./cf-manifests/http-source-manifest.yml
+
+    cf app http-source-rabbit > /tmp/http-source-route.txt
+
+    HTTP_SOURCE_ROUTE=`grep routes /tmp/http-source-route.txt | awk '{ print $2 }'`
+
+    FULL_HTTP_SOURCE_ROUTE=http://$HTTP_SOURCE_ROUTE
+
+    cf push -f ./cf-manifests/splitter-processor-manifest.yml
+
+    cf app splitter-processor-rabbit > /tmp/splitter-processor-route.txt
+
+    SPLITTER_PROCESSOR_ROUTE=`grep routes /tmp/splitter-processor-route.txt | awk '{ print $2 }'`
+
+    FULL_SPLITTER_PROCESSOR_ROUTE=http://$SPLITTER_PROCESSOR_ROUTE
+
+    cf push -f ./cf-manifests/httpsplitter-log-sink-manifest.yml
+
+    cf app log-sink-rabbit > /tmp/httpsplitter-log-sink-route.txt
+
+    HTTPSPLITTER_LOG_SINK_ROUTE=`grep routes /tmp/httpsplitter-log-sink-route.txt | awk '{ print $2 }'`
+
+    FULL_HTTPSPLITTER_LOG_SINK_ROUTE=http://$HTTPSPLITTER_LOG_SINK_ROUTE
+}
+
 function prepare_ticktock_latest_with_rabbit_binder() {
 
     wget -O /tmp/ticktock-time-source.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/time-source-rabbit/2.1.0.BUILD-SNAPSHOT/time-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
@@ -151,6 +191,42 @@ function prepare_partitioning_test_with_rabbit_binder() {
 #Main script starting
 
 SECONDS=0
+
+
+echo "Prepare artifacts for http | splitter | log testing"
+
+prepare_http_splitter_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dsplitter.processor.route=$FULL_SPLITTER_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPSPLITTER_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop http-source-rabbit
+cf stop splitter-processor-rabbit
+cf stop log-sink-rabbit
+
+cf delete http-source-rabbit -f
+cf delete splitter-processor-rabbit -f
+cf delete httpsplitter-log-sink-rabbit -f
+
+cf logout
+
+rm /tmp/http-source-route.txt
+rm /tmp/splitter-processor-route.txt
+rm /tmp/httpsplitter-log-sink-route.txt
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
 
 echo "Prepare artifacts for ticktock testing"
 

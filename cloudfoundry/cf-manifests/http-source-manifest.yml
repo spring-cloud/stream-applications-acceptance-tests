@@ -1,0 +1,15 @@
+---
+applications:
+- name: http-source-rabbit
+  host: http-source-rabbit
+  memory: 2G
+  disk_quota: 2G
+  instances: 1
+  path: /tmp/http-source-rabbit.jar
+  env:
+    LOGGING_FILE: httpsourcerabbit.log
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: logfile,health,info
+    SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED: false
+    SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION: fromhttpsource
+services:
+- scst-rabbit
