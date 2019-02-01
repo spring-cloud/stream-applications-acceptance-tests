@@ -18,11 +18,11 @@ popd () {
 
 function prepare_http_splitter_log_with_rabbit_binder() {
 
-    wget -O /tmp/http-source.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/http-source-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/splitter-processor.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/splitter-processor-rabbit/2.1.0.BUILD-SNAPSHOT/splitter-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/splitter-processor-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/splitter-processor-rabbit/2.1.0.BUILD-SNAPSHOT/splitter-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/httpsplitter-log-sink.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/log-sink-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
