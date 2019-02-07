@@ -16,6 +16,47 @@ popd () {
     command popd "$@" > /dev/null
 }
 
+function prepare_http_transform_log_with_rabbit_binder() {
+
+    wget -O /tmp/http-source-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+
+    wget -O /tmp/transform-processor-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/transform-processor-rabbit/2.1.0.BUILD-SNAPSHOT/transform-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+
+    wget -O /tmp/log-sink-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+
+    if [ $6 == "skip-ssl-validation" ]
+    then
+        cf login -a $1 --skip-ssl-validation -u $2 -p $3 -o $4 -s $5
+    else
+        cf login -a $1 -u $2 -p $3 -o $4 -s $5
+    fi
+
+    cf push -f ./cf-manifests/http-source-manifest.yml
+
+    cf app http-source-rabbit > /tmp/http-source-route.txt
+
+    HTTP_SOURCE_ROUTE=`grep routes /tmp/http-source-route.txt | awk '{ print $2 }'`
+
+    FULL_HTTP_SOURCE_ROUTE=http://$HTTP_SOURCE_ROUTE
+
+    cf push -f ./cf-manifests/transform-processor-manifest.yml
+
+    cf app transform-processor-rabbit > /tmp/transform-processor-route.txt
+
+    TRANSFORM_PROCESSOR_ROUTE=`grep routes /tmp/transform-processor-route.txt | awk '{ print $2 }'`
+
+    FULL_TRANSFORM_PROCESSOR_ROUTE=http://$TRANSFORM_PROCESSOR_ROUTE
+
+    cf push -f ./cf-manifests/httptransform-log-sink-manifest.yml
+
+    cf app log-sink-rabbit > /tmp/httptransform-log-sink-route.txt
+
+    HTTPTRANSFORM_LOG_SINK_ROUTE=`grep routes /tmp/httptransform-log-sink-route.txt | awk '{ print $2 }'`
+
+    FULL_HTTPTRANSFORM_LOG_SINK_ROUTE=http://$HTTPTRANSFORM_LOG_SINK_ROUTE
+}
+
+
 function prepare_http_splitter_log_with_rabbit_binder() {
 
     wget -O /tmp/http-source-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
@@ -192,6 +233,40 @@ function prepare_partitioning_test_with_rabbit_binder() {
 
 SECONDS=0
 
+echo "Prepare artifacts for http | transform | log testing"
+
+prepare_http_transform_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dtransform.processor.route=$FULL_TRANSFORM_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPTRANSFORM_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop http-source-rabbit && cf delete http-source-rabbit -f
+cf stop transform-processor-rabbit && cf delete splitter-processor-rabbit -f
+cf stop log-sink-rabbit && cf delete log-sink-rabbit -f
+
+cf logout
+
+rm /tmp/http-source-route.txt
+rm /tmp/transform-processor-route.txt
+rm /tmp/httptransform-log-sink-route.txt
+
+rm /tmp/http-source-rabbit.jar
+rm /tmp/transform-processor-rabbit.jar
+rm /tmp/log-sink-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
 
 echo "Prepare artifacts for http | splitter | log testing"
 
@@ -210,13 +285,17 @@ cf stop log-sink-rabbit
 
 cf delete http-source-rabbit -f
 cf delete splitter-processor-rabbit -f
-cf delete httpsplitter-log-sink-rabbit -f
+cf delete log-sink-rabbit -f
 
 cf logout
 
 rm /tmp/http-source-route.txt
 rm /tmp/splitter-processor-route.txt
 rm /tmp/httpsplitter-log-sink-route.txt
+
+rm /tmp/http-source-rabbit.jar
+rm /tmp/splitter-processor-rabbit.jar
+rm /tmp/log-sink-rabbit.jar
 
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
@@ -249,6 +328,9 @@ cf logout
 
 rm /tmp/ticktock-time-source-route.txt
 rm /tmp/ticktock-log-sink-route.txt
+
+rm /tmp/ticktock-time-source.jar
+rm /tmp/ticktock-log-sink.jar
 
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
@@ -283,6 +365,9 @@ cf logout
 rm /tmp/ticktock-time-source-route131.txt
 rm /tmp/ticktock-log-sink-route131.txt
 
+rm /tmp/ticktock-time-source131.jar
+rm /tmp/ticktock-log-sink131.jar
+
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
     echo "Early exit due to test failure in ticktock tests"
@@ -311,6 +396,8 @@ cf delete uppercase-transformer -f
 cf logout
 
 rm /tmp/uppercase-route.txt
+
+rm /tmp/uppercase-transformer-rabbit.jar
 
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
@@ -349,6 +436,9 @@ rm /tmp/part-producer-route.txt
 rm /tmp/part-consumer1-route.txt
 rm /tmp/part-consumer2-route.txt
 rm /tmp/part-consumer3-route.txt
+
+rm /tmp/partitioning-producer-rabbit.jar
+rm /tmp/partitioning-consumer-rabbit.jar
 
 duration=$SECONDS
 

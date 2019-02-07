@@ -1,0 +1,17 @@
+---
+applications:
+- name: transform-processor-rabbit
+  host: transform-processor-rabbit
+  memory: 2G
+  disk_quota: 2G
+  instances: 1
+  path: /tmp/transform-processor-rabbit.jar
+  env:
+    LOGGING_FILE: transformprocessorrabbit.log
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: logfile,health,info
+    SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED: false
+    SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION: fromhttpsource
+    SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION: fromtransform
+    TRANSFORMER_EXPRESSION: "payload.toUpperCase()"
+services:
+- scst-rabbit
