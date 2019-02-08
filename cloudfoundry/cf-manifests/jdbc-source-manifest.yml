@@ -1,0 +1,19 @@
+---
+applications:
+- name: jdbc-source-rabbit
+  host: jdbc-source-rabbit
+  memory: 2G
+  disk_quota: 2G
+  instances: 1
+  path: /tmp/jdbc-source-rabbit.jar
+  env:
+    LOGGING_FILE: jdbcsourcerabbit.log
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: logfile,health,info
+    SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED: false
+    SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION: fromjdbcsource
+    JDBC_QUERY: 'select id, name, tag from test order by id'
+    SPRING_DATASOURCE_INITIALIZATION-MODE: ALWAYS
+    SPRING_DATASOURCE_SCHEMA: https://raw.githubusercontent.com/spring-cloud/spring-cloud-stream-acceptance-tests/master/db-scripts/sample-schema.sql
+services:
+- scst-rabbit
+- scst-mysql
