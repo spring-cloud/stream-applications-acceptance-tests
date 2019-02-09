@@ -295,212 +295,212 @@ then
 fi
 
 
-#echo "Prepare artifacts for http | transform | log testing"
-#
-#prepare_http_transform_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dtransform.processor.route=$FULL_TRANSFORM_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPTRANSFORM_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop http-source-rabbit && cf delete http-source-rabbit -f
-#cf stop transform-processor-rabbit && cf delete splitter-processor-rabbit -f
-#cf stop log-sink-rabbit && cf delete log-sink-rabbit -f
-#
-#cf logout
-#
-#rm /tmp/http-source-route.txt
-#rm /tmp/transform-processor-route.txt
-#rm /tmp/httptransform-log-sink-route.txt
-#
-#rm /tmp/http-source-rabbit.jar
-#rm /tmp/transform-processor-rabbit.jar
-#rm /tmp/log-sink-rabbit.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#echo "Prepare artifacts for http | splitter | log testing"
-#
-#prepare_http_splitter_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dsplitter.processor.route=$FULL_SPLITTER_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPSPLITTER_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop http-source-rabbit
-#cf stop splitter-processor-rabbit
-#cf stop log-sink-rabbit
-#
-#cf delete http-source-rabbit -f
-#cf delete splitter-processor-rabbit -f
-#cf delete log-sink-rabbit -f
-#
-#cf logout
-#
-#rm /tmp/http-source-route.txt
-#rm /tmp/splitter-processor-route.txt
-#rm /tmp/httpsplitter-log-sink-route.txt
-#
-#rm /tmp/http-source-rabbit.jar
-#rm /tmp/splitter-processor-rabbit.jar
-#rm /tmp/log-sink-rabbit.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#echo "Prepare artifacts for ticktock testing"
-#
-#prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop ticktock-time-source
-#cf stop ticktock-log-sink
-#
-#cf delete ticktock-time-source -f
-#cf delete ticktock-log-sink -f
-#
-#cf logout
-#
-#rm /tmp/ticktock-time-source-route.txt
-#rm /tmp/ticktock-log-sink-route.txt
-#
-#rm /tmp/ticktock-time-source.jar
-#rm /tmp/ticktock-log-sink.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#
-#echo "Prepare artifacts for ticktock1.3.1 testing"
-#
-#prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE_131 -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE_131
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop ticktock-time-source131
-#cf stop ticktock-log-sink131
-#
-#cf delete ticktock-time-source131 -f
-#cf delete ticktock-log-sink131 -f
-#
-#cf logout
-#
-#rm /tmp/ticktock-time-source-route131.txt
-#rm /tmp/ticktock-log-sink-route131.txt
-#
-#rm /tmp/ticktock-time-source131.jar
-#rm /tmp/ticktock-log-sink131.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#echo "Prepare artifacts for uppercase transformer testing"
-#
-#prepare_uppercase_transformer_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop uppercase-transformer
-#
-#cf delete uppercase-transformer -f
-#
-#cf logout
-#
-#rm /tmp/uppercase-route.txt
-#
-#rm /tmp/uppercase-transformer-rabbit.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in uppercase transformer"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#echo "Prepare artifacts for partitions testing"
-#
-#prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop partitioning-producer
-#cf stop partitioning-consumer1
-#cf stop partitioning-consumer2
-#cf stop partitioning-consumer3
-#
-#cf delete partitioning-producer -f
-#cf delete partitioning-consumer1 -f
-#cf delete partitioning-consumer2 -f
-#cf delete partitioning-consumer3 -f
-#
-#cf logout
-#
-#rm /tmp/part-producer-route.txt
-#rm /tmp/part-consumer1-route.txt
-#rm /tmp/part-consumer2-route.txt
-#rm /tmp/part-consumer3-route.txt
-#
-#rm /tmp/partitioning-producer-rabbit.jar
-#rm /tmp/partitioning-consumer-rabbit.jar
+echo "Prepare artifacts for http | transform | log testing"
+
+prepare_http_transform_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dtransform.processor.route=$FULL_TRANSFORM_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPTRANSFORM_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop http-source-rabbit && cf delete http-source-rabbit -f
+cf stop transform-processor-rabbit && cf delete splitter-processor-rabbit -f
+cf stop log-sink-rabbit && cf delete log-sink-rabbit -f
+
+cf logout
+
+rm /tmp/http-source-route.txt
+rm /tmp/transform-processor-route.txt
+rm /tmp/httptransform-log-sink-route.txt
+
+rm /tmp/http-source-rabbit.jar
+rm /tmp/transform-processor-rabbit.jar
+rm /tmp/log-sink-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+echo "Prepare artifacts for http | splitter | log testing"
+
+prepare_http_splitter_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dsplitter.processor.route=$FULL_SPLITTER_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPSPLITTER_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop http-source-rabbit
+cf stop splitter-processor-rabbit
+cf stop log-sink-rabbit
+
+cf delete http-source-rabbit -f
+cf delete splitter-processor-rabbit -f
+cf delete log-sink-rabbit -f
+
+cf logout
+
+rm /tmp/http-source-route.txt
+rm /tmp/splitter-processor-route.txt
+rm /tmp/httpsplitter-log-sink-route.txt
+
+rm /tmp/http-source-rabbit.jar
+rm /tmp/splitter-processor-rabbit.jar
+rm /tmp/log-sink-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+echo "Prepare artifacts for ticktock testing"
+
+prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop ticktock-time-source
+cf stop ticktock-log-sink
+
+cf delete ticktock-time-source -f
+cf delete ticktock-log-sink -f
+
+cf logout
+
+rm /tmp/ticktock-time-source-route.txt
+rm /tmp/ticktock-log-sink-route.txt
+
+rm /tmp/ticktock-time-source.jar
+rm /tmp/ticktock-log-sink.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+
+echo "Prepare artifacts for ticktock1.3.1 testing"
+
+prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE_131 -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE_131
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop ticktock-time-source131
+cf stop ticktock-log-sink131
+
+cf delete ticktock-time-source131 -f
+cf delete ticktock-log-sink131 -f
+
+cf logout
+
+rm /tmp/ticktock-time-source-route131.txt
+rm /tmp/ticktock-log-sink-route131.txt
+
+rm /tmp/ticktock-time-source131.jar
+rm /tmp/ticktock-log-sink131.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+echo "Prepare artifacts for uppercase transformer testing"
+
+prepare_uppercase_transformer_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop uppercase-transformer
+
+cf delete uppercase-transformer -f
+
+cf logout
+
+rm /tmp/uppercase-route.txt
+
+rm /tmp/uppercase-transformer-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in uppercase transformer"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+echo "Prepare artifacts for partitions testing"
+
+prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop partitioning-producer
+cf stop partitioning-consumer1
+cf stop partitioning-consumer2
+cf stop partitioning-consumer3
+
+cf delete partitioning-producer -f
+cf delete partitioning-consumer1 -f
+cf delete partitioning-consumer2 -f
+cf delete partitioning-consumer3 -f
+
+cf logout
+
+rm /tmp/part-producer-route.txt
+rm /tmp/part-consumer1-route.txt
+rm /tmp/part-consumer2-route.txt
+rm /tmp/part-consumer3-route.txt
+
+rm /tmp/partitioning-producer-rabbit.jar
+rm /tmp/partitioning-consumer-rabbit.jar
 
 duration=$SECONDS
 
