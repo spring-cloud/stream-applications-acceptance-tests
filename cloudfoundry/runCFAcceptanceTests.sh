@@ -18,9 +18,9 @@ popd () {
 
 function prepare_jdbc_log_with_rabbit_binder() {
 
-    wget -O /tmp/jdbc-source-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/jdbc-source-rabbit/2.1.0.BUILD-SNAPSHOT/jdbc-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/jdbc-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/jdbc-source-rabbit/2.1.0.BUILD-SNAPSHOT/jdbc-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/log-sink-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -48,11 +48,11 @@ function prepare_jdbc_log_with_rabbit_binder() {
 
 function prepare_http_transform_log_with_rabbit_binder() {
 
-    wget -O /tmp/http-source-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/http-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/transform-processor-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/transform-processor-rabbit/2.1.0.BUILD-SNAPSHOT/transform-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/transform-processor-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/transform-processor-rabbit/2.1.0.BUILD-SNAPSHOT/transform-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/log-sink-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -88,11 +88,11 @@ function prepare_http_transform_log_with_rabbit_binder() {
 
 function prepare_http_splitter_log_with_rabbit_binder() {
 
-    wget -O /tmp/http-source-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/http-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/splitter-processor-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/splitter-processor-rabbit/2.1.0.BUILD-SNAPSHOT/splitter-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/splitter-processor-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/splitter-processor-rabbit/2.1.0.BUILD-SNAPSHOT/splitter-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/log-sink-rabbit.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -128,9 +128,9 @@ function prepare_http_splitter_log_with_rabbit_binder() {
 
 function prepare_ticktock_latest_with_rabbit_binder() {
 
-    wget -O /tmp/ticktock-time-source.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/time-source-rabbit/2.1.0.BUILD-SNAPSHOT/time-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/ticktock-time-source.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/time-source-rabbit/2.1.0.BUILD-SNAPSHOT/time-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/ticktock-log-sink.jar http://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/ticktock-log-sink.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -158,9 +158,9 @@ function prepare_ticktock_latest_with_rabbit_binder() {
 
 function prepare_ticktock_13_with_rabbit_binder() {
 
-    wget -O /tmp/ticktock-time-source131.jar http://repo.spring.io/release/org/springframework/cloud/stream/app/time-source-rabbit/1.3.1.RELEASE/time-source-rabbit-1.3.1.RELEASE.jar
+    wget -O /tmp/ticktock-time-source131.jar https://repo.spring.io/release/org/springframework/cloud/stream/app/time-source-rabbit/1.3.1.RELEASE/time-source-rabbit-1.3.1.RELEASE.jar
 
-    wget -O /tmp/ticktock-log-sink131.jar http://repo.spring.io/release/org/springframework/cloud/stream/app/log-sink-rabbit/1.3.1.RELEASE/log-sink-rabbit-1.3.1.RELEASE.jar
+    wget -O /tmp/ticktock-log-sink131.jar https://repo.spring.io/release/org/springframework/cloud/stream/app/log-sink-rabbit/1.3.1.RELEASE/log-sink-rabbit-1.3.1.RELEASE.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -188,7 +188,7 @@ function prepare_ticktock_13_with_rabbit_binder() {
 
 function prepare_uppercase_transformer_with_rabbit_binder() {
 
-    wget -O /tmp/uppercase-transformer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/uppercase-transformer-rabbit/0.0.1-SNAPSHOT/uppercase-transformer-rabbit-0.0.1-SNAPSHOT.jar
+    wget -O /tmp/uppercase-transformer-rabbit.jar https://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/uppercase-transformer-rabbit/0.0.1-SNAPSHOT/uppercase-transformer-rabbit-0.0.1-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -208,8 +208,8 @@ function prepare_uppercase_transformer_with_rabbit_binder() {
 
 function prepare_partitioning_test_with_rabbit_binder() {
 
-    wget -O /tmp/partitioning-producer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/partitioning-producer-sample-rabbit/0.0.1-SNAPSHOT/partitioning-producer-sample-rabbit-0.0.1-SNAPSHOT.jar
-    wget -O /tmp/partitioning-consumer-rabbit.jar http://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/partitioning-consumer-sample-rabbit/0.0.1-SNAPSHOT/partitioning-consumer-sample-rabbit-0.0.1-SNAPSHOT.jar
+    wget -O /tmp/partitioning-producer-rabbit.jar https://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/partitioning-producer-sample-rabbit/0.0.1-SNAPSHOT/partitioning-producer-sample-rabbit-0.0.1-SNAPSHOT.jar
+    wget -O /tmp/partitioning-consumer-rabbit.jar https://repo.spring.io/libs-snapshot-local/io/spring/cloud/stream/acceptance/partitioning-consumer-sample-rabbit/0.0.1-SNAPSHOT/partitioning-consumer-sample-rabbit-0.0.1-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
