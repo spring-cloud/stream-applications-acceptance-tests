@@ -436,36 +436,36 @@ then
     exit $BUILD_RETURN_VALUE
 fi
 
-#echo "Prepare artifacts for partitions testing"
-#
-#prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop partitioning-producer
-#cf stop partitioning-consumer1
-#cf stop partitioning-consumer2
-#cf stop partitioning-consumer3
-#
-#cf delete partitioning-producer -f
-#cf delete partitioning-consumer1 -f
-#cf delete partitioning-consumer2 -f
-#cf delete partitioning-consumer3 -f
-#
-#cf logout
-#
-#rm /tmp/part-producer-route.txt
-#rm /tmp/part-consumer1-route.txt
-#rm /tmp/part-consumer2-route.txt
-#rm /tmp/part-consumer3-route.txt
-#
-#rm /tmp/partitioning-producer-rabbit.jar
-#rm /tmp/partitioning-consumer-rabbit.jar
+echo "Prepare artifacts for partitions testing"
+
+prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE -Dpartitioning.producer.route=$FULL_PARTITIONING_PRODUCER_ROUTE  -Dpartitioning.consumer1.route=$FULL_PARTITIONING_CONSUMER1_ROUTE -Dpartitioning.consumer2.route=$FULL_PARTITIONING_CONSUMER2_ROUTE -Dpartitioning.consumer3.route=$FULL_PARTITIONING_CONSUMER3_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop partitioning-producer
+cf stop partitioning-consumer1
+cf stop partitioning-consumer2
+cf stop partitioning-consumer3
+
+cf delete partitioning-producer -f
+cf delete partitioning-consumer1 -f
+cf delete partitioning-consumer2 -f
+cf delete partitioning-consumer3 -f
+
+cf logout
+
+rm /tmp/part-producer-route.txt
+rm /tmp/part-consumer1-route.txt
+rm /tmp/part-consumer2-route.txt
+rm /tmp/part-consumer3-route.txt
+
+rm /tmp/partitioning-producer-rabbit.jar
+rm /tmp/partitioning-consumer-rabbit.jar
 
 duration=$SECONDS
 
