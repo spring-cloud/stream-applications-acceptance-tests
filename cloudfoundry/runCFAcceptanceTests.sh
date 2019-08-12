@@ -48,11 +48,11 @@ function prepare_jdbc_log_with_rabbit_binder() {
 
 function prepare_http_transform_log_with_rabbit_binder() {
 
-    wget -O /tmp/http-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.0.BUILD-SNAPSHOT/http-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/http-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/http-source-rabbit/2.1.1.BUILD-SNAPSHOT/http-source-rabbit-2.1.1.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/transform-processor-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/transform-processor-rabbit/2.1.0.BUILD-SNAPSHOT/transform-processor-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/transform-processor-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/transform-processor-rabbit/2.1.1.BUILD-SNAPSHOT/transform-processor-rabbit-2.1.1.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.2.BUILD-SNAPSHOT/log-sink-rabbit-2.1.2.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -295,80 +295,80 @@ then
 fi
 
 
-#echo "Prepare artifacts for http | transform | log testing"
-#
-#prepare_http_transform_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dtransform.processor.route=$FULL_TRANSFORM_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPTRANSFORM_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop http-source-rabbit && cf delete http-source-rabbit -f
-#cf stop transform-processor-rabbit && cf delete splitter-processor-rabbit -f
-#cf stop log-sink-rabbit && cf delete log-sink-rabbit -f
-#
-#cf logout
-#
-#rm /tmp/http-source-route.txt
-#rm /tmp/transform-processor-route.txt
-#rm /tmp/httptransform-log-sink-route.txt
-#
-#rm /tmp/http-source-rabbit.jar
-#rm /tmp/transform-processor-rabbit.jar
-#rm /tmp/log-sink-rabbit.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#echo "Prepare artifacts for http | splitter | log testing"
-#
-#prepare_http_splitter_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dsplitter.processor.route=$FULL_SPLITTER_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPSPLITTER_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop http-source-rabbit
-#cf stop splitter-processor-rabbit
-#cf stop log-sink-rabbit
-#
-#cf delete http-source-rabbit -f
-#cf delete splitter-processor-rabbit -f
-#cf delete log-sink-rabbit -f
-#
-#cf logout
-#
-#rm /tmp/http-source-route.txt
-#rm /tmp/splitter-processor-route.txt
-#rm /tmp/httpsplitter-log-sink-route.txt
-#
-#rm /tmp/http-source-rabbit.jar
-#rm /tmp/splitter-processor-rabbit.jar
-#rm /tmp/log-sink-rabbit.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
+echo "Prepare artifacts for http | transform | log testing"
+
+prepare_http_transform_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dtransform.processor.route=$FULL_TRANSFORM_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPTRANSFORM_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop http-source-rabbit && cf delete http-source-rabbit -f
+cf stop transform-processor-rabbit && cf delete splitter-processor-rabbit -f
+cf stop log-sink-rabbit && cf delete log-sink-rabbit -f
+
+cf logout
+
+rm /tmp/http-source-route.txt
+rm /tmp/transform-processor-route.txt
+rm /tmp/httptransform-log-sink-route.txt
+
+rm /tmp/http-source-rabbit.jar
+rm /tmp/transform-processor-rabbit.jar
+rm /tmp/log-sink-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+echo "Prepare artifacts for http | splitter | log testing"
+
+prepare_http_splitter_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dsplitter.processor.route=$FULL_SPLITTER_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPSPLITTER_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop http-source-rabbit
+cf stop splitter-processor-rabbit
+cf stop log-sink-rabbit
+
+cf delete http-source-rabbit -f
+cf delete splitter-processor-rabbit -f
+cf delete log-sink-rabbit -f
+
+cf logout
+
+rm /tmp/http-source-route.txt
+rm /tmp/splitter-processor-route.txt
+rm /tmp/httpsplitter-log-sink-route.txt
+
+rm /tmp/http-source-rabbit.jar
+rm /tmp/splitter-processor-rabbit.jar
+rm /tmp/log-sink-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
 #echo "Prepare artifacts for ticktock testing"
 #
 #prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
