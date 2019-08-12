@@ -128,9 +128,9 @@ function prepare_http_splitter_log_with_rabbit_binder() {
 
 function prepare_ticktock_latest_with_rabbit_binder() {
 
-    wget -O /tmp/ticktock-time-source.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/time-source-rabbit/2.1.0.BUILD-SNAPSHOT/time-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/ticktock-time-source.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/time-source-rabbit/2.1.1.BUILD-SNAPSHOT/time-source-rabbit-2.1.1.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/ticktock-log-sink.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/ticktock-log-sink.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.2.BUILD-SNAPSHOT/log-sink-rabbit-2.1.2.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
@@ -369,108 +369,73 @@ then
     exit $BUILD_RETURN_VALUE
 fi
 
-#echo "Prepare artifacts for ticktock testing"
-#
-#prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop ticktock-time-source
-#cf stop ticktock-log-sink
-#
-#cf delete ticktock-time-source -f
-#cf delete ticktock-log-sink -f
-#
-#cf logout
-#
-#rm /tmp/ticktock-time-source-route.txt
-#rm /tmp/ticktock-log-sink-route.txt
-#
-#rm /tmp/ticktock-time-source.jar
-#rm /tmp/ticktock-log-sink.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#
-#echo "Prepare artifacts for ticktock1.3.1 testing"
-#
-#prepare_ticktock_13_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=TickTock13AcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE_131 -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE_131
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop ticktock-time-source131
-#cf stop ticktock-log-sink131
-#
-#cf delete ticktock-time-source131 -f
-#cf delete ticktock-log-sink131 -f
-#
-#cf logout
-#
-#rm /tmp/ticktock-time-source-route131.txt
-#rm /tmp/ticktock-log-sink-route131.txt
-#
-#rm /tmp/ticktock-time-source131.jar
-#rm /tmp/ticktock-log-sink131.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
-#echo "Prepare artifacts for uppercase transformer testing"
-#
-#prepare_uppercase_transformer_with_rabbit_binder $1 $2 $3 $4 $5 $6
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#cf stop uppercase-transformer
-#
-#cf delete uppercase-transformer -f
-#
-#cf logout
-#
-#rm /tmp/uppercase-route.txt
-#
-#rm /tmp/uppercase-transformer-rabbit.jar
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in uppercase transformer"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
+echo "Prepare artifacts for ticktock testing"
+
+prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop ticktock-time-source
+cf stop ticktock-log-sink
+
+cf delete ticktock-time-source -f
+cf delete ticktock-log-sink -f
+
+cf logout
+
+rm /tmp/ticktock-time-source-route.txt
+rm /tmp/ticktock-log-sink-route.txt
+
+rm /tmp/ticktock-time-source.jar
+rm /tmp/ticktock-log-sink.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
+
+echo "Prepare artifacts for uppercase transformer testing"
+
+prepare_uppercase_transformer_with_rabbit_binder $1 $2 $3 $4 $5 $6
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=UppercaseTransformerAcceptanceTests -Dmaven.test.skip=false -Duppercase.processor.route=$FULL_UPPERCASE_ROUTE
+BUILD_RETURN_VALUE=$?
+
+popd
+
+cf stop uppercase-transformer
+
+cf delete uppercase-transformer -f
+
+cf logout
+
+rm /tmp/uppercase-route.txt
+
+rm /tmp/uppercase-transformer-rabbit.jar
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in uppercase transformer"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+
+    exit $BUILD_RETURN_VALUE
+fi
+
 #echo "Prepare artifacts for partitions testing"
 #
 #prepare_partitioning_test_with_rabbit_binder $1 $2 $3 $4 $5 $6
