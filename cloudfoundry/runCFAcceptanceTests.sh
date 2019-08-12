@@ -18,9 +18,9 @@ popd () {
 
 function prepare_jdbc_log_with_rabbit_binder() {
 
-    wget -O /tmp/jdbc-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/jdbc-source-rabbit/2.1.0.BUILD-SNAPSHOT/jdbc-source-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/jdbc-source-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/jdbc-source-rabbit/2.1.3.BUILD-SNAPSHOT/jdbc-source-rabbit-2.1.3.BUILD-SNAPSHOT.jar
 
-    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.0.BUILD-SNAPSHOT/log-sink-rabbit-2.1.0.BUILD-SNAPSHOT.jar
+    wget -O /tmp/log-sink-rabbit.jar https://repo.spring.io/snapshot/org/springframework/cloud/stream/app/log-sink-rabbit/2.1.2.BUILD-SNAPSHOT/log-sink-rabbit-2.1.2.BUILD-SNAPSHOT.jar
 
     if [ $6 == "skip-ssl-validation" ]
     then
