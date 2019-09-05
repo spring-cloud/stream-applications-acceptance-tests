@@ -4,7 +4,7 @@ metadata:
   name: kafka-zk
   labels:
     app: kafka
-    type: acceptance-tests-binder
+    type: stream-ats-kafka
     component: kafka-zk
 spec:
   replicas: 1

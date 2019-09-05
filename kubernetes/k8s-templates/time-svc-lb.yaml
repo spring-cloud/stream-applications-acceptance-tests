@@ -5,9 +5,10 @@ metadata:
   labels:
     app: time
     component: time
-    type: acceptance-tests
+    type: stream-ats
+    spring-deployment-id: time
 spec:
-  type: LoadBalancer
+  type: NodePort
   ports:
   - port: 80
     name: time-port

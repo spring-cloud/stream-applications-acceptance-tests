@@ -1,23 +1,23 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: uppercase-transformer-kafka
+  name: transform-processor-kafka
   labels:
-    app: uppercase-transformer-kafka
-    type: acceptance-tests
-    component: uppercase-transformer-kafka
+    app: transform-processor-kafka
+    type: stream-ats
+    component: transform-processor-kafka
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: uppercase-transformer-kafka
+        app: transform-processor-kafka
         type: acceptance-tests
-        component: uppercase-transformer-kafka
+        component: transform-processor-kafka
     spec:
       containers:
-      - name: uppercase-transformer
-        image: springcloudstream/uppercase-transformer-kafka:latest
+      - name: transform-processor
+        image: springcloudstream/transform-processor-kafka:latest
         ports:
         - containerPort: 8080
         env:
@@ -25,8 +25,14 @@ spec:
             value: kafka:9092
           - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
             value: kafka-zk:2181
+          - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION
+            value: http-out
+          - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
+            value: transformer-out
+          - name: TRANSFORMER_EXPRESSION
+            value: payload.toUpperCase()
           - name: LOGGING_FILE
-            value: uppercase-transformer-kafka.log
+            value: transform-processor-kafka.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
           - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED

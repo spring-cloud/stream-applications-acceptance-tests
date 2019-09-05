@@ -4,7 +4,7 @@ metadata:
   name: time
   labels:
     app: time
-    type: acceptance-tests
+    type: stream-ats
     component: time
 spec:
   replicas: 1

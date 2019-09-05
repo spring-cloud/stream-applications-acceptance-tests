@@ -4,7 +4,7 @@ metadata:
   name: kafka-broker
   labels:
     app: kafka
-    type: acceptance-tests-binder
+    type: stream-ats-kafka
     component: kafka-broker
 spec:
   replicas: 1

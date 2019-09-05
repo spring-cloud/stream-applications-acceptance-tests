@@ -25,9 +25,9 @@ spec:
           - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
             value: kafka-zk:2181
           - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION
-            value: foo
+            value: transformer-out
           - name: LOG_EXPRESSION
-            value: "'TICKTOCK - TIMESTAMP: '.concat(payload)"
+            value: "'From Transformer: '.concat(payload)"
           - name: LOGGING_FILE
             value: log-sink.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
