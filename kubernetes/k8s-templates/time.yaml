@@ -8,6 +8,9 @@ metadata:
     component: time
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: time
   template:
     metadata:
       labels:

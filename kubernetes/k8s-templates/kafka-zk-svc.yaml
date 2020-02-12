@@ -5,7 +5,7 @@ metadata:
   labels:
     app: kafka
     component: kafka-zk
-    type: stream-ats
+    type: stream-ats-kafka
 spec:
   ports:
   - name: client

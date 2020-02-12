@@ -4,10 +4,13 @@ metadata:
   name: kafka-broker
   labels:
     app: kafka
-    type: stream-ats
+    type: stream-ats-kafka
     component: kafka-broker
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
   template:
     metadata:
       labels:

@@ -8,6 +8,9 @@ metadata:
     component: transform-processor-kafka
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: transform-processor-kafka
   template:
     metadata:
       labels:
@@ -31,7 +34,7 @@ spec:
             value: transformer-out
           - name: TRANSFORMER_EXPRESSION
             value: payload.toUpperCase()
-          - name: LOGGING_FILE_NAME
+          - name: LOGGING_FILE
             value: transform-processor-kafka.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info

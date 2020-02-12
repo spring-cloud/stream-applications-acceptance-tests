@@ -8,6 +8,9 @@ metadata:
     component: log
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: log
   template:
     metadata:
       labels:

@@ -66,6 +66,11 @@ function delete_acceptance_test_components() {
     kubectl delete pod,deployment,rc,service -l type="stream-ats"
 }
 
+function delete_acceptance_test_infra() {
+
+    kubectl delete pod,deployment,rc,service -l type="stream-ats-kafka"
+}
+
 #Main script starting
 
 SECONDS=0
@@ -102,7 +107,7 @@ then
     duration=$SECONDS
 
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-
+    delete_acceptance_test_infra
     exit $BUILD_RETURN_VALUE
 fi
 
@@ -123,9 +128,11 @@ then
     duration=$SECONDS
 
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-
+    delete_acceptance_test_infra
     exit $BUILD_RETURN_VALUE
 fi
+
+delete_acceptance_test_infra
 
 duration=$SECONDS
 

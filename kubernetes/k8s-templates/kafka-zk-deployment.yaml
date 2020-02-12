@@ -4,10 +4,13 @@ metadata:
   name: kafka-zk
   labels:
     app: kafka
-    type: stream-ats
+    type: stream-ats-kafka
     component: kafka-zk
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-zk
   template:
     metadata:
       labels:

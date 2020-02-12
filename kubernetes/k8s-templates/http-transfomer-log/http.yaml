@@ -8,6 +8,9 @@ metadata:
     component: http-source
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: http-source
   template:
     metadata:
       labels:
