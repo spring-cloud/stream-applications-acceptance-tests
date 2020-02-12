@@ -4,7 +4,7 @@ metadata:
   name: kafka-broker
   labels:
     app: kafka
-    type: stream-ats-kafka
+    type: stream-ats
     component: kafka-broker
 spec:
   replicas: 1

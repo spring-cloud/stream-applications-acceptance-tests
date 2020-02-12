@@ -28,7 +28,7 @@ spec:
             value: foo
           - name: LOG_EXPRESSION
             value: "'TICKTOCK - TIMESTAMP: '.concat(payload)"
-          - name: LOGGING_FILE
+          - name: LOGGING_FILE_NAME
             value: log-sink.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info

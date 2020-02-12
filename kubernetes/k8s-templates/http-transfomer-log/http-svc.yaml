@@ -8,7 +8,7 @@ metadata:
     type: stream-ats
     spring-deployment-id: http-source
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - port: 80
       name: http-source-port

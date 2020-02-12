@@ -28,7 +28,7 @@ spec:
             value: transformer-out
           - name: LOG_EXPRESSION
             value: "'From Transformer: '.concat(payload)"
-          - name: LOGGING_FILE
+          - name: LOGGING_FILE_NAME
             value: log-sink.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info

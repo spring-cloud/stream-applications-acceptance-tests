@@ -31,7 +31,7 @@ spec:
             value: transformer-out
           - name: TRANSFORMER_EXPRESSION
             value: payload.toUpperCase()
-          - name: LOGGING_FILE
+          - name: LOGGING_FILE_NAME
             value: transform-processor-kafka.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info

@@ -4,7 +4,7 @@ metadata:
   name: kafka-zk
   labels:
     app: kafka
-    type: stream-ats-kafka
+    type: stream-ats
     component: kafka-zk
 spec:
   replicas: 1
