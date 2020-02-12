@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Following env vars needs to be defined
