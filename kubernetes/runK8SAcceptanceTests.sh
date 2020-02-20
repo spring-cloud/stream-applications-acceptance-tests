@@ -82,6 +82,7 @@ if [[ -z "${KUBERNETES_NAMESPACE}" ]]; then
   export KUBERNETES_NAMESPACE='default'
 fi
 
+kubectl config use-context ${CLUSTER_NAME}
 kubectl config set-context ${CLUSTER_NAME} --namespace ${KUBERNETES_NAMESPACE}
 
 kubectl create -f k8s-templates/kafka-zk-deployment.yaml
