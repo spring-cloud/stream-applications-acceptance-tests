@@ -32,9 +32,9 @@ spec:
             value: http-out
           - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
             value: transformer-out
-          - name: TRANSFORMER_EXPRESSION
+          - name: SPEL_FUNCTION_EXPRESSION
             value: payload.toUpperCase()
-          - name: LOGGING_FILE
+          - name: LOGGING_FILE_NAME
             value: transform-processor-kafka.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
