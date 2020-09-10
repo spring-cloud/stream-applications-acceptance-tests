@@ -1,0 +1,33 @@
+version: '2'
+services:
+
+  http-source:
+    image: springcloudstream/http-source-kafka:{{stream.apps.version}}
+    depends_on:
+      - kafka-broker
+    ports:
+      - "{{port}}:{{port}}"
+    environment:
+      - SERVER_PORT={{port}}
+      - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION=processor
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+  http-request-processor:
+    image: springcloudstream/http-request-processor-kafka:{{stream.apps.version}}
+    depends_on:
+      - kafka-broker
+    environment:
+      - HTTP_REQUEST_URL_EXPRESSION='{{url}}'
+      - HTTP_REQUEST_HTTP_METHOD_EXPRESSION='POST'
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION=processor
+      - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION=log
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=http-request-processor
+  log-sink:
+    image: springcloudstream/log-sink-kafka:{{stream.apps.version}}
+    depends_on:
+      - kafka-broker
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION=log
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=http-request-processor
+

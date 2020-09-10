@@ -1,0 +1,27 @@
+version: '2.4'
+services:
+  s3-source:
+    image: springcloudstream/s3-source-kafka:{{stream.apps.version}}
+    depends_on:
+      - kafka-broker
+    environment:
+      - FILE_CONSUMER_MODE=lines
+      - S3_COMMON_ENDPOINT_URL={{s3.endpoint.url}}
+      - S3_COMMON_PATH_STYLE_ACCESS=true
+      - S3_SUPPLIER_REMOTE_DIR=bucket
+      - CLOUD_AWS_STACK_AUTO=false
+      - CLOUD_AWS_CREDENTIALS_ACCESS_KEY=minio
+      - CLOUD_AWS_CREDENTIALS_SECRET_KEY=minio123
+      - CLOUD_AWS_REGION_STATIC=us-east-1
+      - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION=log
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+    extra_hosts:
+      - {{extraHosts}}
+  log-sink:
+    image: springcloudstream/log-sink-kafka:{{stream.apps.version}}
+    depends_on:
+      - kafka-broker
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION=log
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=http

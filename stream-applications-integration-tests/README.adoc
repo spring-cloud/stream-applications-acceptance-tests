@@ -1,0 +1,43 @@
+= Stream Applications Integration Tests
+
+This contains integration tests for pre-packaged stream-applications for Docker using https://www.testcontainers.org/[TestContainers].
+These are end-to-end integration tests running apps and required resources, using docker-compose.
+The goal is to have an end-to-end integration test for each pre-packaged application.
+We don't aim to test different configuration options, as this is the responsibility of the stream applications.
+One of the major benefits is to verify the built Docker images run correctly, especially when we introduce global changes,
+such as upgrading the base JDK image, or other pervasive changes.
+
+== Test Strategy
+
+Each test uses a docker-compose file to configure a simple pipeline including the source, sink, or processor app under test.
+Usually, a single message is sufficient.
+
+The tests use following patterns:
+
+=== Source
+To test a source, we use a log sink and add a LogConsumer that returns a boolean value, eventually evaluating to `true`
+when an expected regex match is detected. Then we create an event to trigger the source.
+
+=== Sink
+To test a sink, we use the http source and post a message using WebClient.
+
+=== Processor
+To test a processor, use an http source and a log sink.
+
+Typically, it is convenient to run the required external resource in a separate container, since it must be accessed by localhost(to provide data to a source or
+verify data created by a sink), and by the containerized applications.
+
+=== Organization and Conventions
+`processor`, `source`, and `sink` are leaf packages.
+The docker-compose YAML corresponding each test are test resources, similarly organized.
+So `.../source/JdbcSinkTests` corresponds to `source/jdbc-source-tests.yml`.
+
+=== Templating
+The docker-compose files are Mustache templates to allow configuration of runtime values, such as ports.
+The Docker tag is required configuration, so the templates must always be processed.
+The result is copied to a temporary file.
+
+
+
+
+
