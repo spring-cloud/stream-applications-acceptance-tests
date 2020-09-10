@@ -1,4 +1,4 @@
-version: '2.4'
+version: {{docker.compose.version}}
 services:
   kafka-broker:
     image: confluentinc/cp-kafka:5.5.1

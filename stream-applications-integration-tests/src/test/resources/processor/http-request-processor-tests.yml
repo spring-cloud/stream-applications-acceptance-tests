@@ -1,4 +1,4 @@
-version: '2'
+version: {{docker.compose.version}}
 services:
 
   http-source:

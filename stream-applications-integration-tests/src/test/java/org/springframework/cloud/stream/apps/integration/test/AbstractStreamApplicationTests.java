@@ -24,9 +24,11 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.UUID;
 
 import com.samskivert.mustache.Mustache;
@@ -42,14 +44,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Testcontainers
 public abstract class AbstractStreamApplicationTests {
 
-	protected final static String STREAM_APPS_VERSION = "3.0.0-SNAPSHOT";
-
-	public static final String STREAM_APPS_VERSION_KEY = "stream.apps.version";
+	private static Properties globalProperties = loadGlobalProperties("test.properties");
 
 	protected static Path tempDir;
 
 	protected static File kafka() {
-		return resourceAsFile("compose-kafka.yml");
+		return resolveTemplate("compose-kafka.yml", Collections.emptyMap());
 	}
 
 	protected static File resourceAsFile(String path) {
@@ -109,11 +109,10 @@ public abstract class AbstractStreamApplicationTests {
 	}
 
 	private static Map<String, Object> addGlobalProperties(Map<String, Object> templateProperties) {
-		if (templateProperties.containsKey(STREAM_APPS_VERSION)) {
-			return templateProperties;
-		}
-		Map<String, Object> enriched = new HashMap<>(templateProperties);
-		enriched.put(STREAM_APPS_VERSION_KEY, STREAM_APPS_VERSION);
+		Map<String, Object> enriched = new HashMap<>();
+		globalProperties.forEach((key, value) -> enriched.put(key.toString(), value.toString()));
+
+		enriched.putAll(templateProperties);
 		return enriched;
 	}
 
@@ -127,4 +126,14 @@ public abstract class AbstractStreamApplicationTests {
 		}
 	}
 
+	private static Properties loadGlobalProperties(String path) {
+		Properties globalProperties = new Properties();
+		try {
+			globalProperties.load(new ClassPathResource(path).getInputStream());
+		}
+		catch (IOException exception) {
+			throw new IllegalStateException(exception.getMessage(), exception);
+		}
+		return globalProperties;
+	}
 }

@@ -1,4 +1,4 @@
-version: '2.4'
+version: {{docker.compose.version}}
 services:
   time-source:
     image: springcloudstream/time-source-kafka:{{stream.apps.version}}

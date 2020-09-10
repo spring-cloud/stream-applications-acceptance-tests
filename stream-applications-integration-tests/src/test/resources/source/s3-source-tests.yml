@@ -1,4 +1,4 @@
-version: '2.4'
+version: {{docker.compose.version}}
 services:
   s3-source:
     image: springcloudstream/s3-source-kafka:{{stream.apps.version}}
