@@ -43,7 +43,6 @@ public class HttpSourceTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("source/http-source-tests.yml", Collections.singletonMap("port", port)))
 					.withLogConsumer("log-sink", appLog("log-sink"))
 					.withLogConsumer("log-sink", logMatcher)

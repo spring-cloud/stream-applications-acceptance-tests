@@ -2,21 +2,18 @@ version: {{docker.compose.version}}
 services:
   http-source:
     image: springcloudstream/http-source-kafka:{{stream.apps.version}}
-    depends_on:
-      - kafka-broker
     ports:
       - "{{port}}:{{port}}"
     environment:
       - SERVER_PORT={{port}}
       - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION=mongodb
-      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS={{kafkaBootStrapServers}}
   mongodb-sink:
     image: springcloudstream/mongodb-sink-kafka:{{stream.apps.version}}
-    depends_on:
-      - kafka-broker
     environment:
       - MONGO_DB_CONSUMER_COLLECTION=test
       - SPRING_DATA_MONGODB_URL={{mongodb.url}}
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS={{kafkaBootStrapServers}}
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION=mongodb
-      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=mongodb-sink
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=mongodb-sink-tests
 

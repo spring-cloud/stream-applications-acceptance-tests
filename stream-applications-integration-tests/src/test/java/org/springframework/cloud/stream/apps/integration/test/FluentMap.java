@@ -19,7 +19,7 @@ package org.springframework.cloud.stream.apps.integration.test;
 import java.util.LinkedHashMap;
 
 public class FluentMap<K, V> extends LinkedHashMap<K, V> {
-	public static FluentMap<String, Object> fluentMap() {
+	public static FluentMap fluentMap() {
 		return new FluentMap<>();
 	}
 

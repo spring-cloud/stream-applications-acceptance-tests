@@ -55,7 +55,6 @@ public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("processor/http-request-processor-tests.yml", fluentMap()
 					.withEntry("port", sourcePort)
 					.withEntry("url", url)))

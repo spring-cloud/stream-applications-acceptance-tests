@@ -2,8 +2,6 @@ version: {{docker.compose.version}}
 services:
   s3-source:
     image: springcloudstream/s3-source-kafka:{{stream.apps.version}}
-    depends_on:
-      - kafka-broker
     environment:
       - FILE_CONSUMER_MODE=lines
       - S3_COMMON_ENDPOINT_URL={{s3.endpoint.url}}
@@ -14,14 +12,12 @@ services:
       - CLOUD_AWS_CREDENTIALS_SECRET_KEY=minio123
       - CLOUD_AWS_REGION_STATIC=us-east-1
       - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION=log
-      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS={{kafkaBootStrapServers}}
     extra_hosts:
-      - {{extraHosts}}
+      - minio:{{minioHost}}
   log-sink:
     image: springcloudstream/log-sink-kafka:{{stream.apps.version}}
-    depends_on:
-      - kafka-broker
     environment:
-      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS={{kafkaBootStrapServers}}
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION=log
-      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=http
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=s3-source-tests

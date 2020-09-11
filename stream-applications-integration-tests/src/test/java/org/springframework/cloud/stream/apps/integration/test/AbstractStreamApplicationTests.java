@@ -24,7 +24,6 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -34,23 +33,30 @@ import java.util.UUID;
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.SocketUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+
 @Testcontainers
 public abstract class AbstractStreamApplicationTests {
 
 	private static Properties globalProperties = loadGlobalProperties("test.properties");
 
-	protected static Path tempDir;
+	private static int kafkaBrokerPort;
 
-	protected static File kafka() {
-		return resolveTemplate("compose-kafka.yml", Collections.emptyMap());
+	static {
+		kafkaBrokerPort = findAvailablePort();
+		startKafkaContainer();
 	}
+
+	protected static Path tempDir;
 
 	protected static File resourceAsFile(String path) {
 		try {
@@ -96,10 +102,14 @@ public abstract class AbstractStreamApplicationTests {
 			try (InputStreamReader resourcesTemplateReader = new InputStreamReader(
 					Objects.requireNonNull(new ClassPathResource(templatePath).getInputStream()))) {
 				Template resourceTemplate = Mustache.compiler().escapeHTML(false).compile(resourcesTemplateReader);
-				Path temporaryFile = Files.createFile(tempDir.resolve(Paths.get(templatePath).getFileName()));
-				Files.write(temporaryFile,
-						resourceTemplate.execute(addGlobalProperties(templateProperties)).getBytes()).toFile();
-				temporaryFile.toFile().deleteOnExit();
+				Path temporaryFile = tempDir.resolve(Paths.get(templatePath).getFileName());
+				if (!Files.exists(temporaryFile)) {
+					Files.createFile(temporaryFile);
+
+					Files.write(temporaryFile,
+							resourceTemplate.execute(addGlobalProperties(templateProperties)).getBytes()).toFile();
+					temporaryFile.toFile().deleteOnExit();
+				}
 				return temporaryFile.toFile();
 			}
 		}
@@ -111,19 +121,9 @@ public abstract class AbstractStreamApplicationTests {
 	private static Map<String, Object> addGlobalProperties(Map<String, Object> templateProperties) {
 		Map<String, Object> enriched = new HashMap<>();
 		globalProperties.forEach((key, value) -> enriched.put(key.toString(), value.toString()));
-
 		enriched.putAll(templateProperties);
+		enriched.put("kafkaBootStrapServers", localHostAddress() + ":" + kafkaBrokerPort);
 		return enriched;
-	}
-
-	public static class AppLog extends Slf4jLogConsumer {
-		public static AppLog appLog(String appName) {
-			return new AppLog(appName);
-		}
-
-		AppLog(String appName) {
-			super(LoggerFactory.getLogger(appName));
-		}
 	}
 
 	private static Properties loadGlobalProperties(String path) {
@@ -136,4 +136,25 @@ public abstract class AbstractStreamApplicationTests {
 		}
 		return globalProperties;
 	}
+
+	private static void startKafkaContainer() {
+		DockerComposeContainer kafkaContainer = new DockerComposeContainer(
+				resolveTemplate("compose-kafka-external.yml",
+						fluentMap().withEntry("kafkaBrokerPort", kafkaBrokerPort)
+								.withEntry("hostAddress", localHostAddress())));
+		kafkaContainer
+				.waitingFor("kafka", Wait.forListeningPort())
+				.start();
+	}
+
+	public static class AppLog extends Slf4jLogConsumer {
+		public static AppLog appLog(String appName) {
+			return new AppLog(appName);
+		}
+
+		AppLog(String appName) {
+			super(LoggerFactory.getLogger(appName));
+		}
+	}
+
 }

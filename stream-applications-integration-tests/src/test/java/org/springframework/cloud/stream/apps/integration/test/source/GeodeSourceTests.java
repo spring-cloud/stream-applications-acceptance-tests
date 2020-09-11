@@ -28,6 +28,7 @@ import org.apache.geode.cache.Region;
 import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -54,6 +55,8 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	private static Region<Object, Object> clientRegion;
 
+	private static ClientCache clientCache;
+
 	@Container
 	private static GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
 			.withFileFromClasspath("Dockerfile", "geode/Dockerfile")
@@ -72,15 +75,16 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	@BeforeAll
 	static void init() {
-		//Not using locator is faster.
+		// Not using locator is faster.
 		System.out.println(geode.execGfsh(
 				"start server --name=Server1 " + "--hostname-for-clients=geode" + " --server-port="
 						+ cacheServerPort + " --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true")
 				.getStdout());
 		System.out.println(geode.execGfsh("connect --jmx-manager=localhost[1099]",
 				"create region --name=myRegion --type=REPLICATE").getStdout());
-		ClientCache clientCache = new ClientCacheFactory().addPoolServer("localhost", cacheServerPort)
+		clientCache = new ClientCacheFactory().addPoolServer("localhost", cacheServerPort)
 				.create();
+		clientCache.readyForEvents();
 		clientRegion = clientCache
 				.createClientRegionFactory(ClientRegionShortcut.PROXY)
 				.create("myRegion");
@@ -88,10 +92,9 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("source/geode-source-tests.yml", fluentMap()
 					.withEntry("geode.host-addresses", "geode:" + cacheServerPort)
-					.withEntry("extraHosts", "geode:" + localHostAddress())
+					.withEntry("geodeHost", localHostAddress())
 					.withEntry("geode.region", "myRegion")))
 							.withLogConsumer("log-sink", appLog("log-sink"))
 							.withLogConsumer("geode-source", geodeLogMatcher)
@@ -106,5 +109,10 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 		clientRegion.put("hello", "world");
 		await().atMost(Duration.ofSeconds(30))
 				.untilTrue(logListener.matches());
+	}
+
+	@AfterAll
+	static void cleanup() {
+		clientCache.close();
 	}
 }

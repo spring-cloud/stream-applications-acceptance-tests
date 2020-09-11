@@ -22,23 +22,27 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.LogMatcher.contains;
 
 public class TickTockTests extends AbstractStreamApplicationTests {
 	// "MM/dd/yy HH:mm:ss";
 	private final Pattern pattern = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
 
+	private final LogMatcher logMatcher = new LogMatcher();
+
 	@Container
 	private final DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
-			resolveTemplate("tick-tock-tests.yml", Collections.EMPTY_MAP));
+			resolveTemplate("tick-tock-tests.yml", Collections.EMPTY_MAP))
+					.withLogConsumer("log-sink", logMatcher)
+					.withLogConsumer("log-sink", appLog("log-sink"));
 
 	@Test
 	void ticktock() {
-		assertThatCode(() -> environment.waitingFor("log-sink", Wait.forLogMessage(pattern.pattern(), 5)
-				.withStartupTimeout(Duration.ofMinutes(2)))).doesNotThrowAnyException();
+		await().atMost(Duration.ofMinutes(2)).untilTrue(logMatcher.withRegex(contains("Started LogSink")).matches());
+		await().atMost(Duration.ofSeconds(30)).untilTrue(logMatcher.withRegex(pattern.pattern()).matches());
 	}
 }

@@ -54,7 +54,6 @@ public class JdbcSinkTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("sink/jdbc-sink-tests.yml", fluentMap()
 					.withEntry("jdbc.url",
 							mariadbContainer.getJdbcUrl().replace("localhost",

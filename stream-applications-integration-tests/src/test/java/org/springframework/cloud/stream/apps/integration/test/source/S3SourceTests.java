@@ -81,12 +81,11 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private final DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("source/s3-source-tests.yml",
 					fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
 							.withEntry("s3.endpoint.url",
 									"http://minio:" + minio.getMappedPort(9000))
-							.withEntry("extraHosts", "minio:" + localHostAddress())))
+							.withEntry("minioHost", localHostAddress())))
 									.withLogConsumer("log-sink", logMatcher)
 									.withLogConsumer("s3-source", logMatcher)
 									.withLogConsumer("log-sink", appLog("logSink"));

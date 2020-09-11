@@ -53,7 +53,6 @@ public class TcpSinkTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("sink/tcp-sink-tests.yml", fluentMap()
 					.withEntry("port", port)
 					.withEntry("tcp.port", tcpPort)

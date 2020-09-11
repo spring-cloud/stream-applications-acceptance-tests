@@ -63,7 +63,6 @@ public class MongoDBSinkTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private DockerComposeContainer environment = new DockerComposeContainer(
-			kafka(),
 			resolveTemplate("sink/mongodb-sink-tests.yml", fluentMap()
 					.withEntry("mongodb.url", mongoConnectionString())
 					.withEntry("port", port)))

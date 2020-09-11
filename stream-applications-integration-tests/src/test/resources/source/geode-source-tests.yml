@@ -3,22 +3,18 @@ services:
 
   geode-source:
     image: springcloudstream/geode-source-kafka:{{stream.apps.version}}
-    depends_on:
-      - kafka-broker
     environment:
       - GEODE_POOL_CONNECT_TYPE=server
       - GEODE_REGION_REGION_NAME={{geode.region}}
       - GEODE_POOL_HOST_ADDRESSES={{geode.host-addresses}}
       - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION=log
-      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS={{kafkaBootStrapServers}}
     extra_hosts:
-      - {{extraHosts}}
+      - geode:{{geodeHost}}
   log-sink:
     image: springcloudstream/log-sink-kafka:{{stream.apps.version}}
-    depends_on:
-      - kafka-broker
     environment:
-      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-broker
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS={{kafkaBootStrapServers}}
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION=log
-      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=geode
+      - SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP=geode-source-tests
 
