@@ -50,30 +50,31 @@ public class HttpSourceTests extends AbstractStreamApplicationTests {
 
 	@Test
 	void plaintext() {
-		ClientResponse response = webClient()
-				.post()
-				.uri("http://localhost:" + port)
-				.contentType(MediaType.TEXT_PLAIN)
-				.body(Mono.just("Hello"), String.class)
-				.exchange()
-				.block();
-		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
-
 		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(logMatcher.endsWith("Hello").matches());
+				.until(logMatcher.verifies(log -> log.when(() -> {
+					ClientResponse response = webClient()
+							.post()
+							.uri("http://localhost:" + port)
+							.contentType(MediaType.TEXT_PLAIN)
+							.body(Mono.just("Hello"), String.class)
+							.exchange()
+							.block();
+					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
+				}).endsWith("Hello")));
 	}
 
 	@Test
 	void json() {
-		ClientResponse response = webClient()
-				.post()
-				.uri("http://localhost:" + port)
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(Mono.just("{\"Hello\":\"world\"}"), String.class)
-				.exchange()
-				.block();
-		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
 		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(logMatcher.withRegex(".*\\{\"Hello\":\"world\"\\}").matches());
+				.until(logMatcher.verifies(log -> log.when(() -> {
+					ClientResponse response = webClient()
+							.post()
+							.uri("http://localhost:" + port)
+							.contentType(MediaType.APPLICATION_JSON)
+							.body(Mono.just("{\"Hello\":\"world\"}"), String.class)
+							.exchange()
+							.block();
+					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
+				}).matchesRegex(".*\\{\"Hello\":\"world\"\\}")));
 	}
 }

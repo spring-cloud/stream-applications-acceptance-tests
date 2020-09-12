@@ -20,10 +20,11 @@ import java.time.Duration;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
@@ -42,7 +43,7 @@ public class TickTockTests extends AbstractStreamApplicationTests {
 
 	@Test
 	void ticktock() {
-		await().atMost(Duration.ofMinutes(2)).untilTrue(logMatcher.contains("Started LogSink").matches());
-		await().atMost(Duration.ofSeconds(30)).untilTrue(logMatcher.withRegex(pattern.pattern()).matches());
+		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started LogSink")));
+		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.matchesRegex(pattern.pattern())));
 	}
 }

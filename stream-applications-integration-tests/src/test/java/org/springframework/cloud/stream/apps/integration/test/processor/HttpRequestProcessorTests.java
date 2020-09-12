@@ -78,16 +78,17 @@ public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
 						.setResponseCode(HttpStatus.OK.value());
 			}
 		});
-		ClientResponse response = webClient()
-				.post()
-				.uri("http://localhost:" + sourcePort)
-				.contentType(MediaType.TEXT_PLAIN)
-				.body(Mono.just("ping"), String.class)
-				.exchange()
-				.block();
-		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
 
 		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(logMatcher.withRegex(".*\\{\"response\":\"ping\"\\}").matches());
+				.until(logMatcher.verifies(log -> log.when(() -> {
+					ClientResponse response = webClient()
+							.post()
+							.uri("http://localhost:" + sourcePort)
+							.contentType(MediaType.TEXT_PLAIN)
+							.body(Mono.just("ping"), String.class)
+							.exchange()
+							.block();
+					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
+				}).matchesRegex(".*\\{\"response\":\"ping\"\\}")));
 	}
 }

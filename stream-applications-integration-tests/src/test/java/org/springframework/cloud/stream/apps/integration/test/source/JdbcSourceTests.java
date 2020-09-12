@@ -43,6 +43,6 @@ public class JdbcSourceTests extends AbstractStreamApplicationTests {
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofSeconds(30)).untilTrue(logMatcher.contains("Bart Simpson").matches());
+		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.contains("Bart Simpson")));
 	}
 }

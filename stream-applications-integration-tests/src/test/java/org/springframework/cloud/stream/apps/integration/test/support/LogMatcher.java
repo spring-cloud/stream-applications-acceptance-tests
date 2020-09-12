@@ -19,6 +19,7 @@ package org.springframework.cloud.stream.apps.integration.test.support;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -32,12 +33,12 @@ public class LogMatcher implements Consumer<OutputFrame> {
 
 	private List<Consumer<String>> listeners = new LinkedList<>();
 
-	public LogListener contains(String string) {
-		return withRegex(".*" + string + ".*");
-	}
-
-	public LogListener endsWith(String string) {
-		return withRegex(".*" + string);
+	public Callable<Boolean> verifies(Consumer<LogListener> consumer) {
+		LogListener logListener = new LogListener();
+		consumer.accept(logListener);
+		logListener.runnable.ifPresent(runnable -> runnable.run());
+		listeners.add(logListener);
+		return () -> logListener.matches().get();
 	}
 
 	@Override
@@ -45,25 +46,12 @@ public class LogMatcher implements Consumer<OutputFrame> {
 		listeners.forEach(m -> m.accept(outputFrame.getUtf8String()));
 	}
 
-	public LogListener withRegex(String regex) {
-		LogListener logListener = new LogListener(regex);
-		if (logListener.runnable.isPresent()) {
-			logListener.runnable.get().run();
-		}
-		listeners.add(logListener);
-		return logListener;
-	}
-
 	public class LogListener implements Consumer<String> {
 		private AtomicBoolean matched = new AtomicBoolean();
 
 		private Optional<Runnable> runnable = Optional.empty();
 
-		private final Pattern pattern;
-
-		LogListener(String regex) {
-			pattern = Pattern.compile(regex);
-		}
+		private Pattern pattern;
 
 		@Override
 		public void accept(String s) {
@@ -72,6 +60,19 @@ public class LogMatcher implements Consumer<OutputFrame> {
 				logger.debug(" MATCHED " + s.trim());
 				matched.set(true);
 			}
+		}
+
+		public LogListener contains(String string) {
+			return matchesRegex(".*" + string + ".*");
+		}
+
+		public LogListener endsWith(String string) {
+			return matchesRegex(".*" + string);
+		}
+
+		public LogListener matchesRegex(String regex) {
+			this.pattern = Pattern.compile(regex);
+			return this;
 		}
 
 		public LogListener when(Runnable runnable) {

@@ -45,20 +45,20 @@ import static org.springframework.cloud.stream.apps.integration.test.support.Flu
 
 public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
-	private static LogMatcher logMatcher = new LogMatcher();
+	private static final LogMatcher logMatcher = new LogMatcher();
 
-	private static LogMatcher geodeLogMatcher = new LogMatcher();
+	private static final LogMatcher geodeLogMatcher = new LogMatcher();
 
-	private static int locatorPort = findAvailablePort();
+	private static final int locatorPort = findAvailablePort();
 
-	private static int cacheServerPort = findAvailablePort();
+	private static final int cacheServerPort = findAvailablePort();
 
 	private static Region<Object, Object> clientRegion;
 
 	private static ClientCache clientCache;
 
 	@Container
-	private static GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
+	private static final GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
 			.withFileFromClasspath("Dockerfile", "geode/Dockerfile")
 			.withBuildArg("CACHE_SERVER_PORT", String.valueOf(cacheServerPort))
 			.withBuildArg("LOCATOR_PORT", String.valueOf(locatorPort)),
@@ -91,7 +91,7 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 	}
 
 	@Container
-	private DockerComposeContainer environment = new DockerComposeContainer(
+	private final DockerComposeContainer environment = new DockerComposeContainer(
 			templateProcessor("source/geode-source-tests.yml", fluentMap()
 					.withEntry("geode.host-addresses", "geode:" + cacheServerPort)
 					.withEntry("geodeHost", localHostAddress())
@@ -103,12 +103,16 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	@Test
 	void test() {
-		LogMatcher.LogListener logListener = logMatcher.contains("world");
+		// logMatcher.when(() -> clientRegion.put("hello", "world")).contains("world"));
+		// LogMatcher.LogListener logListener = logMatcher.contains("world").when(() ->
+		// clientRegion.put("hello", "world"));
 		await().atMost(Duration.ofMinutes(2))
-				.untilTrue(geodeLogMatcher.contains("Started GeodeSource").matches());
-		clientRegion.put("hello", "world");
+				.until(geodeLogMatcher.verifies(log -> log.contains("Started GeodeSource")));
+		// clientRegion.put("hello", "world");
 		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(logListener.matches());
+				.until(logMatcher.verifies(log -> log
+						.when(() -> clientRegion.put("hello", "world"))
+						.contains("world")));
 	}
 
 	@AfterAll
