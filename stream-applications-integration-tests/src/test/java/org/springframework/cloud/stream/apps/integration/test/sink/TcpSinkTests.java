@@ -32,14 +32,14 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 public class TcpSinkTests extends AbstractStreamApplicationTests {
 
@@ -53,10 +53,10 @@ public class TcpSinkTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("sink/tcp-sink-tests.yml", fluentMap()
+			templateProcessor("sink/tcp-sink-tests.yml", fluentMap()
 					.withEntry("port", port)
 					.withEntry("tcp.port", tcpPort)
-					.withEntry("tcp.host", localHostAddress())))
+					.withEntry("tcp.host", localHostAddress())).processTemplate())
 							.withLogConsumer("tcp-sink", appLog("tcp-sink"))
 							.withExposedService("http-source", port,
 									Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));

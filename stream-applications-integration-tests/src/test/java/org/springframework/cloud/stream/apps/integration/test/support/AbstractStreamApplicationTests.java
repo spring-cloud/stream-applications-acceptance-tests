@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test;
+package org.springframework.cloud.stream.apps.integration.test.support;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Template;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -42,29 +37,29 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.SocketUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 @Testcontainers
 public abstract class AbstractStreamApplicationTests {
 
-	private static Properties globalProperties = loadGlobalProperties("test.properties");
-
 	private static int kafkaBrokerPort;
+
+	private static TemplateProcessor.Builder templateProcessor;
 
 	static {
 		kafkaBrokerPort = findAvailablePort();
+		templateProcessor = TemplateProcessor.withGlobalProperties(loadGlobalProperties("test.properties"))
+				.withOutputDirectory(initializeTempDir());
 		startKafkaContainer();
 	}
 
-	protected static Path tempDir;
+	protected static TemplateProcessor templateProcessor(String path) {
+		return templateProcessor.withTemplate(new ClassPathResource(path)).create();
+	}
 
-	protected static File resourceAsFile(String path) {
-		try {
-			return new ClassPathResource(path).getFile();
-		}
-		catch (IOException e) {
-			throw new IllegalStateException("Unable to access resource " + path);
-		}
+	protected static TemplateProcessor templateProcessor(String path, Map<?, ?> templateProperties) {
+		return templateProcessor.withTemplate(new ClassPathResource(path)).withTemplateProperties(templateProperties)
+				.create();
 	}
 
 	protected static String localHostAddress() {
@@ -82,48 +77,34 @@ public abstract class AbstractStreamApplicationTests {
 		return webClient;
 	}
 
+	protected static File resourceAsFile(String path) {
+		try {
+			return new ClassPathResource(path).getFile();
+		}
+		catch (IOException e) {
+			throw new IllegalStateException("Unable to access resource " + path);
+		}
+	}
+
 	// Junit TempDir does not work with DockerComposeContainer unless you mount it.
 	// Also doesn't work as @BeforeAll in this case.
-	static void initializeTempDir() throws IOException {
-		Path tempRoot = Paths.get(new ClassPathResource("/").getFile().getAbsolutePath());
-		if (tempDir == null) {
+	static Path initializeTempDir() {
+		Path tempDir;
+		try {
+			Path tempRoot = Paths.get(new ClassPathResource("/").getFile().getAbsolutePath());
+
 			tempDir = Files.createTempDirectory(tempRoot, UUID.randomUUID().toString());
 			tempDir.toFile().deleteOnExit();
 		}
+		catch (Exception e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+
+		return tempDir;
 	}
 
 	protected static int findAvailablePort() {
 		return SocketUtils.findAvailableTcpPort(10000, 20000);
-	}
-
-	protected static File resolveTemplate(String templatePath, Map<String, Object> templateProperties) {
-		try {
-			initializeTempDir();
-			try (InputStreamReader resourcesTemplateReader = new InputStreamReader(
-					Objects.requireNonNull(new ClassPathResource(templatePath).getInputStream()))) {
-				Template resourceTemplate = Mustache.compiler().escapeHTML(false).compile(resourcesTemplateReader);
-				Path temporaryFile = tempDir.resolve(Paths.get(templatePath).getFileName());
-				if (!Files.exists(temporaryFile)) {
-					Files.createFile(temporaryFile);
-
-					Files.write(temporaryFile,
-							resourceTemplate.execute(addGlobalProperties(templateProperties)).getBytes()).toFile();
-					temporaryFile.toFile().deleteOnExit();
-				}
-				return temporaryFile.toFile();
-			}
-		}
-		catch (IOException e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
-	}
-
-	private static Map<String, Object> addGlobalProperties(Map<String, Object> templateProperties) {
-		Map<String, Object> enriched = new HashMap<>();
-		globalProperties.forEach((key, value) -> enriched.put(key.toString(), value.toString()));
-		enriched.putAll(templateProperties);
-		enriched.put("kafkaBootStrapServers", localHostAddress() + ":" + kafkaBrokerPort);
-		return enriched;
 	}
 
 	private static Properties loadGlobalProperties(String path) {
@@ -134,14 +115,17 @@ public abstract class AbstractStreamApplicationTests {
 		catch (IOException exception) {
 			throw new IllegalStateException(exception.getMessage(), exception);
 		}
+		globalProperties.put("kafkaBootStrapServers", localHostAddress() + ":" + kafkaBrokerPort);
 		return globalProperties;
 	}
 
 	private static void startKafkaContainer() {
 		DockerComposeContainer kafkaContainer = new DockerComposeContainer(
-				resolveTemplate("compose-kafka-external.yml",
-						fluentMap().withEntry("kafkaBrokerPort", kafkaBrokerPort)
-								.withEntry("hostAddress", localHostAddress())));
+				templateProcessor.withTemplateProperties(fluentMap()
+						.withEntry("kafkaBrokerPort", kafkaBrokerPort)
+						.withEntry("hostAddress", localHostAddress()))
+						.withTemplate(new ClassPathResource("compose-kafka-external.yml"))
+						.create().processTemplate());
 		kafkaContainer
 				.waitingFor("kafka", Wait.forListeningPort())
 				.start();

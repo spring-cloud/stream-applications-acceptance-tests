@@ -36,14 +36,13 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.LogMatcher;
-import org.springframework.cloud.stream.apps.integration.test.LogMatcher.LogListener;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
+import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher.LogListener;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
-import static org.springframework.cloud.stream.apps.integration.test.LogMatcher.contains;
+import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 public class S3SourceTests extends AbstractStreamApplicationTests {
 
@@ -76,16 +75,15 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 				.withCredentials(new AWSStaticCredentialsProvider(credentials))
 				.build();
 
-
 	}
 
 	@Container
 	private final DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("source/s3-source-tests.yml",
+			templateProcessor("source/s3-source-tests.yml",
 					fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
 							.withEntry("s3.endpoint.url",
 									"http://minio:" + minio.getMappedPort(9000))
-							.withEntry("minioHost", localHostAddress())))
+							.withEntry("minioHost", localHostAddress())).processTemplate())
 									.withLogConsumer("log-sink", logMatcher)
 									.withLogConsumer("s3-source", logMatcher)
 									.withLogConsumer("log-sink", appLog("logSink"));
@@ -93,8 +91,8 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 	@Test
 	void test() {
 
-		await().atMost(Duration.ofMinutes(2)).untilTrue(logMatcher.withRegex(contains("Started S3Source")).matches());
-		LogListener logListener = logMatcher.withRegex(contains("Bart Simpson"));
+		await().atMost(Duration.ofMinutes(2)).untilTrue(logMatcher.contains("Started S3Source").matches());
+		LogListener logListener = logMatcher.contains("Bart Simpson");
 		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
 		await().atMost(Duration.ofSeconds(30)).untilTrue(logListener.matches());

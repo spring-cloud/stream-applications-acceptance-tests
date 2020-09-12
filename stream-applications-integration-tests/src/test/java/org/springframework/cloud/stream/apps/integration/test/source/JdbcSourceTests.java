@@ -24,11 +24,10 @@ import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.LogMatcher;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.LogMatcher.contains;
 
 public class JdbcSourceTests extends AbstractStreamApplicationTests {
 
@@ -36,14 +35,14 @@ public class JdbcSourceTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("source/jdbc-source-tests.yml",
-					Collections.singletonMap("init.sql", resourceAsFile("init.sql"))))
+			templateProcessor("source/jdbc-source-tests.yml",
+					Collections.singletonMap("init.sql", resourceAsFile("init.sql"))).processTemplate())
 							.withLogConsumer("log-sink", logMatcher)
-							.waitingFor("jdbc-source", Wait.forLogMessage(contains("Started JdbcSource"), 1)
+							.waitingFor("jdbc-source", Wait.forLogMessage(".*Started JdbcSource.*", 1)
 									.withStartupTimeout(Duration.ofMinutes(2)));
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofSeconds(30)).untilTrue(logMatcher.withRegex(contains("Bart Simpson")).matches());
+		await().atMost(Duration.ofSeconds(30)).untilTrue(logMatcher.contains("Bart Simpson").matches());
 	}
 }

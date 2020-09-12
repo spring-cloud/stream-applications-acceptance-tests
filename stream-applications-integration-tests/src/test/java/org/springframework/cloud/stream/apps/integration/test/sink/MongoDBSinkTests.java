@@ -28,7 +28,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -36,8 +36,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 public class MongoDBSinkTests extends AbstractStreamApplicationTests {
 
@@ -63,9 +63,9 @@ public class MongoDBSinkTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("sink/mongodb-sink-tests.yml", fluentMap()
+			templateProcessor("sink/mongodb-sink-tests.yml", fluentMap()
 					.withEntry("mongodb.url", mongoConnectionString())
-					.withEntry("port", port)))
+					.withEntry("port", port)).processTemplate())
 							.withLogConsumer("jdbc-sink",
 									appLog("jdbc-sink"))
 							.withExposedService("http-source", port,

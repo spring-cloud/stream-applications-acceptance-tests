@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test;
+package org.springframework.cloud.stream.apps.integration.test.support;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -31,12 +32,12 @@ public class LogMatcher implements Consumer<OutputFrame> {
 
 	private List<Consumer<String>> listeners = new LinkedList<>();
 
-	public static String contains(String string) {
-		return ".*" + string + ".*";
+	public LogListener contains(String string) {
+		return withRegex(".*" + string + ".*");
 	}
 
-	public static String endsWith(String string) {
-		return ".*" + string;
+	public LogListener endsWith(String string) {
+		return withRegex(".*" + string);
 	}
 
 	@Override
@@ -46,12 +47,17 @@ public class LogMatcher implements Consumer<OutputFrame> {
 
 	public LogListener withRegex(String regex) {
 		LogListener logListener = new LogListener(regex);
+		if (logListener.runnable.isPresent()) {
+			logListener.runnable.get().run();
+		}
 		listeners.add(logListener);
 		return logListener;
 	}
 
 	public class LogListener implements Consumer<String> {
 		private AtomicBoolean matched = new AtomicBoolean();
+
+		private Optional<Runnable> runnable = Optional.empty();
 
 		private final Pattern pattern;
 
@@ -66,6 +72,11 @@ public class LogMatcher implements Consumer<OutputFrame> {
 				logger.debug(" MATCHED " + s.trim());
 				matched.set(true);
 			}
+		}
+
+		public LogListener when(Runnable runnable) {
+			this.runnable = Optional.of(runnable);
+			return this;
 		}
 
 		public AtomicBoolean matches() {

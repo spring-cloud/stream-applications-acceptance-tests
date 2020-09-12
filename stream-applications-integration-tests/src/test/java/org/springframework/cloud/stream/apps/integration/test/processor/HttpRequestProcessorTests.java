@@ -30,8 +30,8 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.LogMatcher;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,8 +39,8 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
 	private static MockWebServer server = new MockWebServer();
@@ -55,9 +55,9 @@ public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("processor/http-request-processor-tests.yml", fluentMap()
+			templateProcessor("processor/http-request-processor-tests.yml", fluentMap()
 					.withEntry("port", sourcePort)
-					.withEntry("url", url)))
+					.withEntry("url", url)).processTemplate())
 							.withLogConsumer("log-sink", appLog("log-sink"))
 							.withLogConsumer("log-sink", logMatcher)
 							.withExposedService("http-source", sourcePort,

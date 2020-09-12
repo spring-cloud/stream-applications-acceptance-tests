@@ -27,15 +27,15 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 public class JdbcSinkTests extends AbstractStreamApplicationTests {
 
@@ -54,13 +54,13 @@ public class JdbcSinkTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("sink/jdbc-sink-tests.yml", fluentMap()
+			templateProcessor("sink/jdbc-sink-tests.yml", fluentMap()
 					.withEntry("jdbc.url",
 							mariadbContainer.getJdbcUrl().replace("localhost",
 									localHostAddress()))
 					.withEntry("user", mariadbContainer.getUsername())
 					.withEntry("password", mariadbContainer.getPassword())
-					.withEntry("port", port)))
+					.withEntry("port", port)).processTemplate())
 							.withLogConsumer("jdbc-sink", appLog("jdbc-sink"))
 							.withExposedService("http-source", port,
 									Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));

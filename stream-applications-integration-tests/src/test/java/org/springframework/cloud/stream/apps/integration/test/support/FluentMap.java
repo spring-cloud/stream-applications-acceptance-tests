@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test;
+package org.springframework.cloud.stream.apps.integration.test.support;
 
 import java.util.LinkedHashMap;
 

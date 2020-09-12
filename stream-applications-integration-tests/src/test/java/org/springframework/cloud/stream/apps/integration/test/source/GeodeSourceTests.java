@@ -36,12 +36,12 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.fn.test.support.geode.GeodeContainer;
-import org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.LogMatcher;
+import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
 
 public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
@@ -92,10 +92,10 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	@Container
 	private DockerComposeContainer environment = new DockerComposeContainer(
-			resolveTemplate("source/geode-source-tests.yml", fluentMap()
+			templateProcessor("source/geode-source-tests.yml", fluentMap()
 					.withEntry("geode.host-addresses", "geode:" + cacheServerPort)
 					.withEntry("geodeHost", localHostAddress())
-					.withEntry("geode.region", "myRegion")))
+					.withEntry("geode.region", "myRegion")).processTemplate())
 							.withLogConsumer("log-sink", appLog("log-sink"))
 							.withLogConsumer("geode-source", geodeLogMatcher)
 							.withLogConsumer("log-sink", logMatcher)
@@ -103,9 +103,9 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	@Test
 	void test() {
-		LogMatcher.LogListener logListener = logMatcher.withRegex(LogMatcher.contains("world"));
+		LogMatcher.LogListener logListener = logMatcher.contains("world");
 		await().atMost(Duration.ofMinutes(2))
-				.untilTrue(geodeLogMatcher.withRegex(LogMatcher.contains("Started GeodeSource")).matches());
+				.untilTrue(geodeLogMatcher.contains("Started GeodeSource").matches());
 		clientRegion.put("hello", "world");
 		await().atMost(Duration.ofSeconds(30))
 				.untilTrue(logListener.matches());
