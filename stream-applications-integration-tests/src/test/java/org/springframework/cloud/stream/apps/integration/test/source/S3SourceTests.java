@@ -29,6 +29,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -38,6 +39,7 @@ import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
 import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
+import org.springframework.cloud.stream.apps.integration.test.support.TemplateProcessor;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
@@ -76,24 +78,83 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 
 	}
 
-	@Container
-	private final DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("source/s3-source-tests.yml",
-					fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
-							.withEntry("s3.endpoint.url",
-									"http://minio:" + minio.getMappedPort(9000))
-							.withEntry("minioHost", localHostAddress())).processTemplate())
-									.withLogConsumer("log-sink", logMatcher)
-									.withLogConsumer("s3-source", logMatcher)
-									.withLogConsumer("log-sink", appLog("logSink"));
+	private DockerComposeContainer environment;
 
 	@Test
-	void test() {
+	void testLines() {
+		startContainer(
+				templateProcessor("source/s3-source-tests.yml",
+						fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
+								.withEntry("s3.endpoint.url",
+										"http://minio:" + minio.getMappedPort(9000))
+								.withEntry("functionDefinition", "s3Supplier")
+								.withEntry("consumerMode", "lines")
+								.withEntry("listOnly", false)
+								.withEntry("minioHost", localHostAddress())));
+
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
 		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
 			s3Client.createBucket("bucket");
 			s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
 		}).contains("Bart Simpson")));
 
+	}
+
+	@Test
+	void testTaskLaunchRequest() {
+
+		startContainer(templateProcessor("source/s3-source-tests.yml",
+						fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
+								.withEntry("s3.endpoint.url",
+										"http://minio:" + minio.getMappedPort(9000))
+								.withEntry("functionDefinition", "s3Supplier|taskLaunchRequestFunction")
+								.withEntry("consumerMode", "ref")
+								.withEntry("listOnly", false)
+								.withEntry("minioHost", localHostAddress())));
+		environment.start();
+		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
+		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
+			s3Client.createBucket("bucket");
+			s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
+		}).endsWith(
+				"\\{\"args\":\\[\"filename=/tmp/s3-supplier/test\"\\],\"deploymentProps\":\\{\\},\"name\":\"myTask\"\\}")));
+	}
+
+	@Test
+	void testListOnly() {
+
+		startContainer(templateProcessor("source/s3-source-tests.yml",
+				fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
+						.withEntry("s3.endpoint.url",
+								"http://minio:" + minio.getMappedPort(9000))
+						.withEntry("functionDefinition", "s3Supplier")
+						.withEntry("consumerMode", "ref")
+						.withEntry("listOnly", true)
+						.withEntry("minioHost", localHostAddress())));
+		environment.start();
+		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
+		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
+			s3Client.createBucket("bucket");
+			s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
+		}).contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
+	}
+
+
+	private void startContainer(TemplateProcessor templateProcessor) {
+		environment = new DockerComposeContainer(
+				templateProcessor.processTemplate())
+						.withLogConsumer("log-sink", logMatcher)
+						.withLogConsumer("s3-source", logMatcher)
+						.withLogConsumer("log-sink", appLog("log-sink"));
+		environment.start();
+	}
+
+	@AfterEach
+	void stop() {
+		if (s3Client.doesBucketExistV2("bucket")) {
+			s3Client.deleteObject("bucket", "test");
+			s3Client.deleteBucket("bucket");
+		}
+		environment.stop();
 	}
 }

@@ -55,6 +55,9 @@ public final class TemplateProcessor {
 					Objects.requireNonNull(template.getInputStream()))) {
 				Template resourceTemplate = Mustache.compiler().escapeHTML(false).compile(resourcesTemplateReader);
 				Path temporaryFile = outputDirectory.resolve(Paths.get(template.getFilename()));
+				if (Files.exists(temporaryFile)) {
+					Files.delete(temporaryFile);
+				}
 				Files.createFile(temporaryFile);
 				Files.write(temporaryFile,
 						resourceTemplate.execute(addGlobalProperties(templateProperties)).getBytes()).toFile();

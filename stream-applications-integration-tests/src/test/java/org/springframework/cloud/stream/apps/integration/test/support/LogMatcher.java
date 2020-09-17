@@ -59,6 +59,7 @@ public class LogMatcher implements Consumer<OutputFrame> {
 			if (pattern.matcher(s.trim()).matches()) {
 				logger.debug(" MATCHED " + s.trim());
 				matched.set(true);
+				listeners.remove(this);
 			}
 		}
 
