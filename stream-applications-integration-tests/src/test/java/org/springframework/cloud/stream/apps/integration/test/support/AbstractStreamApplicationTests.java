@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -132,8 +134,12 @@ public abstract class AbstractStreamApplicationTests {
 	}
 
 	public static class AppLog extends Slf4jLogConsumer {
+		private static final Map<String, AppLog> appLogs = new ConcurrentHashMap<>();
 		public static AppLog appLog(String appName) {
-			return new AppLog(appName);
+			if (!appLogs.containsKey(appName)) {
+				appLogs.put(appName, new AppLog(appName));
+			}
+			return appLogs.get(appName);
 		}
 
 		AppLog(String appName) {

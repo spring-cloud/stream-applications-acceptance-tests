@@ -103,12 +103,8 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 
 	@Test
 	void test() {
-		// logMatcher.when(() -> clientRegion.put("hello", "world")).contains("world"));
-		// LogMatcher.LogListener logListener = logMatcher.contains("world").when(() ->
-		// clientRegion.put("hello", "world"));
 		await().atMost(Duration.ofMinutes(2))
 				.until(geodeLogMatcher.verifies(log -> log.contains("Started GeodeSource")));
-		// clientRegion.put("hello", "world");
 		await().atMost(Duration.ofSeconds(30))
 				.until(logMatcher.verifies(log -> log
 						.when(() -> clientRegion.put("hello", "world"))
