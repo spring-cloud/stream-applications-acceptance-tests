@@ -26,9 +26,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
