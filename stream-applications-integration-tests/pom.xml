@@ -43,6 +43,7 @@
 		<spring-javaformat-checkstyle.version>0.0.7</spring-javaformat-checkstyle.version>
 		<wiremock.version>2.27.1</wiremock.version>
 		<aws.version>1.11.415</aws.version>
+		<mysql-connector-java.version>8.0.16</mysql-connector-java.version>
 	</properties>
 
 	<dependencies>
@@ -103,7 +104,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.16</version>
+			<version>${mysql-connector-java.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
