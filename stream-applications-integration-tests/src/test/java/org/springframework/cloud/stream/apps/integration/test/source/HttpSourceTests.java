@@ -19,7 +19,6 @@ package org.springframework.cloud.stream.apps.integration.test.source;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
@@ -45,7 +44,7 @@ public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 	@Container
 	private static final StreamApps streamApps = kafkaStreamApps(HttpSourceTests.class.getSimpleName(), kafka)
 			.withSourceContainer(httpSource(serverPort))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
 			.build();
 
 	@Test

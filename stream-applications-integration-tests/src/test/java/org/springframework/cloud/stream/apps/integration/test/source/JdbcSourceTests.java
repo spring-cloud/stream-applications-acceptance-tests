@@ -20,7 +20,6 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
@@ -47,7 +46,7 @@ public class JdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	private static final StreamApps streamApps = kafkaStreamApps(JdbcSourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("jdbc-source"))
+			.withSourceContainer(defaultKafkaContainerFor("jdbc-source")
 					.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
 					.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
 					.withEnv("SPRING_DATASOURCE_USERNAME", "test")
@@ -55,7 +54,7 @@ public class JdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 					.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
 					.withEnv("SPRING_DATASOURCE_URL",
 							"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test"))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink"))
+			.withSinkContainer(defaultKafkaContainerFor("log-sink")
 					.withLogConsumer(logMatcher))
 			.build();
 

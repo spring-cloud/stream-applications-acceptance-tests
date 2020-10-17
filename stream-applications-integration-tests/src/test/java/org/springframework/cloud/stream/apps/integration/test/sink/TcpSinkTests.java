@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
@@ -56,7 +55,7 @@ public class TcpSinkTests extends KafkaStreamIntegrationTestSupport {
 	@Container
 	private static StreamApps streamApps = kafkaStreamApps(TcpSinkTests.class.getSimpleName(), kafka)
 			.withSourceContainer(httpSource(port))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("tcp-sink"))
+			.withSinkContainer(defaultKafkaContainerFor("tcp-sink")
 					.withEnv("TCP_CONSUMER_HOST", localHostAddress())
 					.withEnv("TCP_PORT", String.valueOf(tcpPort))
 					.withEnv("TCP_CONSUMER_ENCODER", "CRLF"))

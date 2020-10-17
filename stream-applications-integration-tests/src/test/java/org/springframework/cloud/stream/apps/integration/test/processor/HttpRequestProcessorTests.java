@@ -25,7 +25,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
@@ -57,12 +56,12 @@ public class HttpRequestProcessorTests extends KafkaStreamIntegrationTestSupport
 	private static final StreamApps streamApps = kafkaStreamApps(
 			HttpRequestProcessorTests.class.getSimpleName(), kafka)
 					.withSourceContainer(httpSource(sourcePort))
-					.withProcessorContainer(new GenericContainer(defaultKafkaImageFor("http-request-processor"))
+					.withProcessorContainer(defaultKafkaContainerFor("http-request-processor")
 							.withEnv("HTTP_REQUEST_URL_EXPRESSION",
 									"'http://" + localHostAddress() + ":" + serverPort + "'")
 							.withEnv("HTTP_REQUEST_HTTP_METHOD_EXPRESSION", "'POST'"))
 					.withSinkContainer(
-							new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+							defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
 					.build();
 
 	@BeforeAll

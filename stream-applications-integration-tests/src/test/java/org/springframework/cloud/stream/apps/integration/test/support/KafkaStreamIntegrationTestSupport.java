@@ -30,14 +30,18 @@ public abstract class KafkaStreamIntegrationTestSupport extends AbstractKafkaStr
 
 	protected static final String DOCKER_ORG = "springcloudstream";
 
-	protected static DockerImageName defaultKafkaImageFor(String appName) {
+	private static DockerImageName defaultKafkaImageFor(String appName) {
 		return DockerImageName.parse(DOCKER_ORG + "/" + appName + "-kafka:" + VERSION);
 	}
 
+	protected static GenericContainer defaultKafkaContainerFor(String appName) {
+		return new GenericContainer(defaultKafkaImageFor(appName));
+	}
+
 	protected static GenericContainer httpSource(int serverPort) {
-			return new GenericContainer(defaultKafkaImageFor("http-source"))
-			.withEnv("SERVER_PORT", String.valueOf(serverPort))
-			.withExposedPorts(serverPort)
-					.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+		return new GenericContainer(defaultKafkaImageFor("http-source"))
+				.withEnv("SERVER_PORT", String.valueOf(serverPort))
+				.withExposedPorts(serverPort)
+				.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
 	}
 }

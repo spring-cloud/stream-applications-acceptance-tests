@@ -22,7 +22,6 @@ import java.util.List;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
@@ -60,7 +59,7 @@ public class MongoDBSinkTests extends KafkaStreamIntegrationTestSupport {
 	@Container
 	private StreamApps streamApps = kafkaStreamApps(MongoDBSinkTests.class.getSimpleName(), kafka)
 			.withSourceContainer(httpSource(serverPort))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("mongodb-sink"))
+			.withSinkContainer(defaultKafkaContainerFor("mongodb-sink")
 					.withEnv("MONGO_DB_CONSUMER_COLLECTION", "test")
 					.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString()))
 			.build();

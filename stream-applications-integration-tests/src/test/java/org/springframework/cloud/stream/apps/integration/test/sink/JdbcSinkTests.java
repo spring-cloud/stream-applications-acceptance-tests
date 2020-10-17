@@ -22,7 +22,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
@@ -59,11 +58,11 @@ public class JdbcSinkTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	private static StreamApps streamApps = kafkaStreamApps(JdbcSinkTests.class.getSimpleName(), kafka)
-			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("http-source"))
+			.withSourceContainer(defaultKafkaContainerFor("http-source")
 					.withEnv("SERVER_PORT", String.valueOf(serverPort))
 					.withExposedPorts(serverPort)
 					.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2))))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("jdbc-sink"))
+			.withSinkContainer(defaultKafkaContainerFor("jdbc-sink")
 					.withEnv("JDBC_CONSUMER_COLUMNS", "name,city:address.city,street:address.street")
 					.withEnv("JDBC_CONSUMER_TABLE_NAME", "People")
 					.withEnv("SPRING_DATASOURCE_USERNAME", "test")

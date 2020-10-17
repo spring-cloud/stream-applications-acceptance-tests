@@ -46,14 +46,14 @@ public class SftpSourceTests extends KafkaStreamIntegrationTestSupport {
 			.withStartupTimeout(Duration.ofMinutes(1));
 
 	private StreamApps streamApps = kafkaStreamApps(SftpSourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("sftp-source"))
+			.withSourceContainer(defaultKafkaContainerFor("sftp-source")
 					.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
 					.withEnv("SFTP_SUPPLIER_REMOTE_DIR", "/remote")
 					.withEnv("SFTP_SUPPLIER_FACTORY_USERNAME", "user")
 					.withEnv("SFTP_SUPPLIER_FACTORY_PASSWORD", "pass")
 					.withEnv("SFTP_SUPPLIER_FACTORY_PORT", String.valueOf(sftp.getMappedPort(22)))
 					.withEnv("SFTP_SUPPLIER_FACTORY_HOST", localHostAddress()))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
 			.build();
 
 	// TODO: This fixture supports additional tests with different modes, etc.

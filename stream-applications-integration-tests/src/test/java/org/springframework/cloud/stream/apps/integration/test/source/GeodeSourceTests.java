@@ -31,7 +31,6 @@ import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -73,6 +72,17 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 					.withCommand("tail", "-f", "/dev/null")
 					.withStartupTimeout(Duration.ofMinutes(2));
 
+	@Container
+	private final StreamApps streamApps = kafkaStreamApps(this.getClass().getSimpleName(), kafka)
+			.withSourceContainer(defaultKafkaContainerFor("geode-source")
+					.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
+					.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
+					.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
+					.withLogConsumer(geodeLogMatcher))
+			.withSinkContainer(defaultKafkaContainerFor("log-sink")
+					.withLogConsumer(logMatcher))
+			.build();
+
 	@BeforeAll
 	static void init() {
 		// Not using locator is faster.
@@ -89,17 +99,6 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 				.createClientRegionFactory(ClientRegionShortcut.PROXY)
 				.create("myRegion");
 	}
-
-	@Container
-	private final StreamApps streamApps = kafkaStreamApps(this.getClass().getSimpleName(), kafka)
-			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("geode-source"))
-					.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
-					.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
-					.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
-					.withLogConsumer(geodeLogMatcher))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink"))
-					.withLogConsumer(logMatcher))
-			.build();
 
 	@Test
 	void test() {

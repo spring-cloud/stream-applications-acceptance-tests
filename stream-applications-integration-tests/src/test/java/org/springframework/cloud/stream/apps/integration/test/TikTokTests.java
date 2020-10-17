@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
@@ -38,8 +37,8 @@ public class TikTokTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	static StreamApps streamApps = kafkaStreamApps("tikTok", kafka)
-			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("time-source")))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink"))
+			.withSourceContainer(defaultKafkaContainerFor("time-source"))
+			.withSinkContainer(defaultKafkaContainerFor("log-sink")
 					.withLogConsumer(logMatcher))
 			.build();
 

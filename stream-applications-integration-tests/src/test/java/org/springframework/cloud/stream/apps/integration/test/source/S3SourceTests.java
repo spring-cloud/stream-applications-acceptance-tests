@@ -83,7 +83,7 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 	}
 
 	private StreamApps streamApps = kafkaStreamApps(S3SourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("s3-source"))
+			.withSourceContainer(defaultKafkaContainerFor("s3-source")
 					.withEnv("S3_SUPPLIER_REMOTE_DIR", "bucket")
 					.withEnv("S3_COMMON_ENDPOINT_URL", "http://" + localHostAddress() + ":" + minio.getMappedPort(9000))
 					.withEnv("S3_COMMON_PATH_STYLE_ACCESS", "true")
@@ -92,7 +92,7 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 					.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
 					.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1")
 					.withLogConsumer(logMatcher))
-			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
 			.build();
 
 	@Test
