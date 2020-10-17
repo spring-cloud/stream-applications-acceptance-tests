@@ -17,58 +17,62 @@
 package org.springframework.cloud.stream.apps.integration.test.source;
 
 import java.time.Duration;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
-import org.springframework.cloud.stream.apps.integration.test.support.TemplateProcessor;
+import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class SftpSourceTests extends AbstractStreamApplicationTests {
+public class SftpSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static LogMatcher logMatcher = new LogMatcher();
 
 	@Container
-	private static final GenericContainer sftp = (GenericContainer) new GenericContainer("atmoz/sftp")
+	private static final GenericContainer sftp = new GenericContainer(DockerImageName.parse("atmoz/sftp"))
 			.withExposedPorts(22)
 			.withCommand("user:pass:::remote")
 			.withClasspathResourceMapping("sftp", "/home/user/remote", BindMode.READ_ONLY)
 			.withStartupTimeout(Duration.ofMinutes(1));
 
-	private DockerComposeContainer environment;
+	private StreamApps streamApps = kafkaStreamApps(SftpSourceTests.class.getSimpleName(), kafka)
+			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("sftp-source"))
+					.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
+					.withEnv("SFTP_SUPPLIER_REMOTE_DIR", "/remote")
+					.withEnv("SFTP_SUPPLIER_FACTORY_USERNAME", "user")
+					.withEnv("SFTP_SUPPLIER_FACTORY_PASSWORD", "pass")
+					.withEnv("SFTP_SUPPLIER_FACTORY_PORT", String.valueOf(sftp.getMappedPort(22)))
+					.withEnv("SFTP_SUPPLIER_FACTORY_HOST", localHostAddress()))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+			.build();
 
+	// TODO: This fixture supports additional tests with different modes, etc.
 	@Test
 	void test() {
-		startContainer(templateProcessor("source/sftp-source-tests.yml",
-				fluentMap().withEntry("sftpPort", sftp.getMappedPort(22))
-						.withEntry("functionDefinition", "sftpSupplier")
-						.withEntry("consumerMode", "ref")
-						.withEntry("listOnly", false)
-						.withEntry("sftpHost", localHostAddress())));
+		startContainer(
+				fluentMap().withEntry("FILE_CONSUMER_MODE", "ref"));
+
 		await().atMost(Duration.ofSeconds(30))
 				.until(logMatcher.verifies(logListener -> logListener.endsWith("\"/tmp/sftp-supplier/data.txt\"")));
 	}
 
-	private void startContainer(TemplateProcessor templateProcessor) {
-		environment = new DockerComposeContainer(
-				templateProcessor.processTemplate())
-						.withLogConsumer("log-sink", logMatcher)
-						.withLogConsumer("sftp-source", logMatcher)
-						.withLogConsumer("log-sink", appLog("log-sink"));
-		environment.start();
+	private void startContainer(Map<String, String> environment) {
+		streamApps.sourceContainer().withEnv(environment);
+		streamApps.start();
 	}
 
 	@AfterEach
 	void stop() {
-		environment.stop();
+		streamApps.stop();
 	}
 }

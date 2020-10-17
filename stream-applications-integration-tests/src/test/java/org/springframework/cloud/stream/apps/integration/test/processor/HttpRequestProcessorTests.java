@@ -25,43 +25,45 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
+public class HttpRequestProcessorTests extends KafkaStreamIntegrationTestSupport {
 	private static MockWebServer server = new MockWebServer();
 
-	private static int serverPort = findAvailablePort();
-
-	private static String url = "http://" + localHostAddress() + ":" + serverPort;
-
-	private static int sourcePort = findAvailablePort();
+	private static WebClient webClient = WebClient.builder().build();
 
 	private static LogMatcher logMatcher = new LogMatcher();
 
+	private static int serverPort = findAvailablePort();
+
+	private static int sourcePort = findAvailablePort();
+
 	@Container
-	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("processor/http-request-processor-tests.yml", fluentMap()
-					.withEntry("port", sourcePort)
-					.withEntry("url", url)).processTemplate())
-							.withLogConsumer("log-sink", appLog("log-sink"))
-							.withLogConsumer("log-sink", logMatcher)
-							.withExposedService("http-source", sourcePort,
-									Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+	private static final StreamApps streamApps = kafkaStreamApps(
+			HttpRequestProcessorTests.class.getSimpleName(), kafka)
+					.withSourceContainer(httpSource(sourcePort))
+					.withProcessorContainer(new GenericContainer(defaultKafkaImageFor("http-request-processor"))
+							.withEnv("HTTP_REQUEST_URL_EXPRESSION",
+									"'http://" + localHostAddress() + ":" + serverPort + "'")
+							.withEnv("HTTP_REQUEST_HTTP_METHOD_EXPRESSION", "'POST'"))
+					.withSinkContainer(
+							new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+					.build();
 
 	@BeforeAll
 	static void startServer() throws Exception {
@@ -81,9 +83,9 @@ public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
 
 		await().atMost(Duration.ofSeconds(30))
 				.until(logMatcher.verifies(log -> log.when(() -> {
-					ClientResponse response = webClient()
+					ClientResponse response = webClient
 							.post()
-							.uri("http://localhost:" + sourcePort)
+							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(sourcePort))
 							.contentType(MediaType.TEXT_PLAIN)
 							.body(Mono.just("ping"), String.class)
 							.exchange()
@@ -91,4 +93,5 @@ public class HttpRequestProcessorTests extends AbstractStreamApplicationTests {
 					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
 				}).matchesRegex(".*\\{\"response\":\"ping\"\\}")));
 	}
+
 }

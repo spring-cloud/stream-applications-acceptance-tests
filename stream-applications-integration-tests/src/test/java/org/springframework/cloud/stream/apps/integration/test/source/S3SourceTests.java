@@ -17,6 +17,7 @@
 package org.springframework.cloud.stream.apps.integration.test.source;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import com.amazonaws.ClientConfiguration;
@@ -32,35 +33,38 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
-import org.springframework.cloud.stream.apps.integration.test.support.TemplateProcessor;
+import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
+import static org.springframework.cloud.stream.app.test.integration.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class S3SourceTests extends AbstractStreamApplicationTests {
+public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static AmazonS3 s3Client;
 
 	private static LogMatcher logMatcher = new LogMatcher();
 
 	@Container
-	private static final GenericContainer minio = new GenericContainer("minio/minio:RELEASE.2020-09-05T07-14-49Z")
-			.withExposedPorts(9000)
-			.withEnv("MINIO_ACCESS_KEY", "minio")
-			.withEnv("MINIO_SECRET_KEY", "minio123")
-			.waitingFor(Wait.forHttp("/minio/health/live"))
-			.withCreateContainerCmdModifier(
-					(Consumer<CreateContainerCmd>) createContainerCmd -> createContainerCmd.withHostName("minio"))
-			.withLogConsumer(appLog("minio"))
-			.withCommand("minio", "server", "/data");
+	private static final GenericContainer minio = new GenericContainer(
+			DockerImageName.parse("minio/minio:RELEASE.2020-09-05T07-14-49Z"))
+					.withExposedPorts(9000)
+					.withEnv("MINIO_ACCESS_KEY", "minio")
+					.withEnv("MINIO_SECRET_KEY", "minio123")
+					.waitingFor(Wait.forHttp("/minio/health/live"))
+					.withCreateContainerCmdModifier(
+							(Consumer<CreateContainerCmd>) createContainerCmd -> createContainerCmd
+									.withHostName("minio"))
+					.withLogConsumer(appLog("minio"))
+					.withCommand("minio", "server", "/data");
 
 	@BeforeAll
 	static void init() {
@@ -78,44 +82,46 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 
 	}
 
-	private DockerComposeContainer environment;
+	private StreamApps streamApps = kafkaStreamApps(S3SourceTests.class.getSimpleName(), kafka)
+			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("s3-source"))
+					.withEnv("S3_SUPPLIER_REMOTE_DIR", "bucket")
+					.withEnv("S3_COMMON_ENDPOINT_URL", "http://" + localHostAddress() + ":" + minio.getMappedPort(9000))
+					.withEnv("S3_COMMON_PATH_STYLE_ACCESS", "true")
+					.withEnv("CLOUD_AWS_STACK_AUTO", "false")
+					.withEnv("CLOUD_AWS_CREDENTIALS_ACCESS_KEY", "minio")
+					.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
+					.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1")
+					.withLogConsumer(logMatcher))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+			.build();
 
 	@Test
 	void testLines() {
 		startContainer(
-				templateProcessor("source/s3-source-tests.yml",
-						fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
-								.withEntry("s3.endpoint.url",
-										"http://minio:" + minio.getMappedPort(9000))
-								.withEntry("functionDefinition", "s3Supplier")
-								.withEntry("consumerMode", "lines")
-								.withEntry("listOnly", false)
-								.withEntry("minioHost", localHostAddress())));
+				fluentMap().withEntry("FILE_CONSUMER_MODE", "lines"));
 
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
 		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
 			s3Client.createBucket("bucket");
-			s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
+			s3Client.putObject(new PutObjectRequest("bucket", "test",
+					resourceAsFile("minio/data")));
 		}).contains("Bart Simpson")));
-
 	}
 
 	@Test
 	void testTaskLaunchRequest() {
 
-		startContainer(templateProcessor("source/s3-source-tests.yml",
-						fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
-								.withEntry("s3.endpoint.url",
-										"http://minio:" + minio.getMappedPort(9000))
-								.withEntry("functionDefinition", "s3Supplier|taskLaunchRequestFunction")
-								.withEntry("consumerMode", "ref")
-								.withEntry("listOnly", false)
-								.withEntry("minioHost", localHostAddress())));
-		environment.start();
+		startContainer(fluentMap()
+				.withEntry("SPRING_CLOUD_FUNCTION_DEFINITION", "s3Supplier|taskLaunchRequestFunction")
+				.withEntry("TASK_LAUNCH_REQUEST_ARG_EXPRESSIONS", "filename=payload")
+				.withEntry("TASK_LAUNCH_REQUEST_TASK_NAME", "myTask")
+				.withEntry("FILE_CONSUMER_MODE", "ref"));
+
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
 		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
 			s3Client.createBucket("bucket");
-			s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
+			s3Client.putObject(new PutObjectRequest("bucket", "test",
+					resourceAsFile("minio/data")));
 		}).endsWith(
 				"\\{\"args\":\\[\"filename=/tmp/s3-supplier/test\"\\],\"deploymentProps\":\\{\\},\"name\":\"myTask\"\\}")));
 	}
@@ -123,30 +129,22 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 	@Test
 	void testListOnly() {
 
-		startContainer(templateProcessor("source/s3-source-tests.yml",
-				fluentMap().withEntry("s3.local.dir", resourceAsFile("minio"))
-						.withEntry("s3.endpoint.url",
-								"http://minio:" + minio.getMappedPort(9000))
-						.withEntry("functionDefinition", "s3Supplier")
-						.withEntry("consumerMode", "ref")
-						.withEntry("listOnly", true)
-						.withEntry("minioHost", localHostAddress())));
-		environment.start();
+		startContainer(
+				fluentMap()
+						.withEntry("FILE_CONSUMER_MODE", "ref")
+						.withEntry("S3_SUPPLIER_LIST_ONLY", "true"));
+
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
 		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
 			s3Client.createBucket("bucket");
-			s3Client.putObject(new PutObjectRequest("bucket", "test", resourceAsFile("minio/data")));
+			s3Client.putObject(new PutObjectRequest("bucket", "test",
+					resourceAsFile("minio/data")));
 		}).contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
 	}
 
-
-	private void startContainer(TemplateProcessor templateProcessor) {
-		environment = new DockerComposeContainer(
-				templateProcessor.processTemplate())
-						.withLogConsumer("log-sink", logMatcher)
-						.withLogConsumer("s3-source", logMatcher)
-						.withLogConsumer("log-sink", appLog("log-sink"));
-		environment.start();
+	private void startContainer(Map<String, String> environment) {
+		streamApps.sourceContainer().withEnv(environment);
+		streamApps.start();
 	}
 
 	@AfterEach
@@ -155,6 +153,6 @@ public class S3SourceTests extends AbstractStreamApplicationTests {
 			s3Client.deleteObject("bucket", "test");
 			s3Client.deleteBucket("bucket");
 		}
-		environment.stop();
+		streamApps.stop();
 	}
 }

@@ -22,31 +22,34 @@ import java.util.List;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class MongoDBSinkTests extends AbstractStreamApplicationTests {
+public class MongoDBSinkTests extends KafkaStreamIntegrationTestSupport {
 
-	private static int port = findAvailablePort();
+	private static int serverPort = findAvailablePort();
 
 	private static MongoTemplate mongoTemplate;
 
+	private static WebClient webClient = WebClient.builder().build();
+
 	@Container
-	private static MongoDBContainer mongoDBContainer = new MongoDBContainer()
+	private static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"))
 			.withExposedPorts(27017)
 			.withStartupTimeout(Duration.ofMinutes(2));
 
@@ -54,29 +57,27 @@ public class MongoDBSinkTests extends AbstractStreamApplicationTests {
 		return String.format("mongodb://%s:%s/%s", localHostAddress(), mongoDBContainer.getMappedPort(27017), "test");
 	}
 
+	@Container
+	private StreamApps streamApps = kafkaStreamApps(MongoDBSinkTests.class.getSimpleName(), kafka)
+			.withSourceContainer(httpSource(serverPort))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("mongodb-sink"))
+					.withEnv("MONGO_DB_CONSUMER_COLLECTION", "test")
+					.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString()))
+			.build();
+
 	@BeforeAll
-	private static void buildMongoTemplate() {
+	static void buildMongoTemplate() {
 		MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(
 				mongoConnectionString());
 		mongoTemplate = new MongoTemplate(mongoDatabaseFactory);
 	}
 
-	@Container
-	private DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("sink/mongodb-sink-tests.yml", fluentMap()
-					.withEntry("mongodb.url", mongoConnectionString())
-					.withEntry("port", port)).processTemplate())
-							.withLogConsumer("jdbc-sink",
-									appLog("jdbc-sink"))
-							.withExposedService("http-source", port,
-									Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
-
 	@Test
 	void postData() {
 		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\": \"Narrow Alley\"}}";
-		ClientResponse response = webClient()
+		ClientResponse response = webClient
 				.post()
-				.uri("http://localhost:" + port)
+				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
 				.contentType(MediaType.APPLICATION_JSON)
 				.body(Mono.just(json), String.class)
 				.exchange()

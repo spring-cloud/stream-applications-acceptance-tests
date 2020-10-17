@@ -11,5 +11,5 @@
 
 	<logger name="org.testcontainers" level="INFO"/>
 	<logger name="com.github.dockerjava" level="WARN"/>
-	<logger name="org.springframework.cloud.stream.apps.integration.test" level="DEBUG"/>
+<!--	<logger name="org.springframework.cloud.stream.app.test.integration" level="DEBUG"/>-->
 </configuration>

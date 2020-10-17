@@ -27,21 +27,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class TcpSinkTests extends AbstractStreamApplicationTests {
+public class TcpSinkTests extends KafkaStreamIntegrationTestSupport {
 
 	private static final int port = findAvailablePort();
 
@@ -51,15 +51,16 @@ public class TcpSinkTests extends AbstractStreamApplicationTests {
 
 	private static final AtomicBoolean socketReady = new AtomicBoolean();
 
+	private static WebClient webClient = WebClient.builder().build();
+
 	@Container
-	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("sink/tcp-sink-tests.yml", fluentMap()
-					.withEntry("port", port)
-					.withEntry("tcp.port", tcpPort)
-					.withEntry("tcp.host", localHostAddress())).processTemplate())
-							.withLogConsumer("tcp-sink", appLog("tcp-sink"))
-							.withExposedService("http-source", port,
-									Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+	private static StreamApps streamApps = kafkaStreamApps(TcpSinkTests.class.getSimpleName(), kafka)
+			.withSourceContainer(httpSource(port))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("tcp-sink"))
+					.withEnv("TCP_CONSUMER_HOST", localHostAddress())
+					.withEnv("TCP_PORT", String.valueOf(tcpPort))
+					.withEnv("TCP_CONSUMER_ENCODER", "CRLF"))
+			.build();
 
 	@BeforeAll
 	static void startTcpServer() {
@@ -77,9 +78,9 @@ public class TcpSinkTests extends AbstractStreamApplicationTests {
 	@Test
 	void postData() throws IOException {
 		String text = "Hello, world!";
-		ClientResponse response = webClient()
+		ClientResponse response = webClient
 				.post()
-				.uri("http://localhost:" + port)
+				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(port))
 				.contentType(MediaType.TEXT_PLAIN)
 				.body(Mono.just(text), String.class)
 				.exchange()

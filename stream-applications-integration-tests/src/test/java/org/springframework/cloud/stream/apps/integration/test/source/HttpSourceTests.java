@@ -17,44 +17,44 @@
 package org.springframework.cloud.stream.apps.integration.test.source;
 
 import java.time.Duration;
-import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class HttpSourceTests extends AbstractStreamApplicationTests {
+public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 
-	private static int port = findAvailablePort();
+	private static int serverPort = findAvailablePort();
+
+	private static WebClient webClient = WebClient.builder().build();
 
 	private static LogMatcher logMatcher = new LogMatcher();
 
 	@Container
-	private static final DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("source/http-source-tests.yml", Collections.singletonMap("port", port)).processTemplate())
-					.withLogConsumer("log-sink", appLog("log-sink"))
-					.withLogConsumer("log-sink", logMatcher)
-					.withExposedService("http-source", port,
-							Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+	private static final StreamApps streamApps = kafkaStreamApps(HttpSourceTests.class.getSimpleName(), kafka)
+			.withSourceContainer(httpSource(serverPort))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink")).withLogConsumer(logMatcher))
+			.build();
 
 	@Test
 	void plaintext() {
 		await().atMost(Duration.ofSeconds(30))
 				.until(logMatcher.verifies(log -> log.when(() -> {
-					ClientResponse response = webClient()
+					ClientResponse response = webClient
 							.post()
-							.uri("http://localhost:" + port)
+							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
 							.contentType(MediaType.TEXT_PLAIN)
 							.body(Mono.just("Hello"), String.class)
 							.exchange()
@@ -67,9 +67,9 @@ public class HttpSourceTests extends AbstractStreamApplicationTests {
 	void json() {
 		await().atMost(Duration.ofSeconds(30))
 				.until(logMatcher.verifies(log -> log.when(() -> {
-					ClientResponse response = webClient()
+					ClientResponse response = webClient
 							.post()
-							.uri("http://localhost:" + port)
+							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
 							.contentType(MediaType.APPLICATION_JSON)
 							.body(Mono.just("{\"Hello\":\"world\"}"), String.class)
 							.exchange()
@@ -77,4 +77,5 @@ public class HttpSourceTests extends AbstractStreamApplicationTests {
 					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
 				}).matchesRegex(".*\\{\"Hello\":\"world\"\\}")));
 	}
+
 }

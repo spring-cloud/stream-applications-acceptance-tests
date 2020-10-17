@@ -21,67 +21,75 @@ import java.time.Duration;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class JdbcSinkTests extends AbstractStreamApplicationTests {
+public class JdbcSinkTests extends KafkaStreamIntegrationTestSupport {
 
-	private static int port = findAvailablePort();
+	private static int serverPort = findAvailablePort();
 
 	private static JdbcTemplate jdbcTemplate;
 
-	@Container
-	private static MariaDBContainer mariadbContainer = (MariaDBContainer) new MariaDBContainer()
-			.withDatabaseName("test")
-			.withPassword("password")
-			.withUsername("user")
-			.withInitScript("init.sql")
-			.withExposedPorts(3306)
-			.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+	private static WebClient webClient = WebClient.builder().build();
 
 	@Container
-	private DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("sink/jdbc-sink-tests.yml", fluentMap()
-					.withEntry("jdbc.url",
-							mariadbContainer.getJdbcUrl().replace("localhost",
-									localHostAddress()))
-					.withEntry("user", mariadbContainer.getUsername())
-					.withEntry("password", mariadbContainer.getPassword())
-					.withEntry("port", port)).processTemplate())
-							.withLogConsumer("jdbc-sink", appLog("jdbc-sink"))
-							.withExposedService("http-source", port,
-									Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));
+	private static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
+			.withUsername("test")
+			.withPassword("secret")
+			.withExposedPorts(3306)
+			.withNetwork(kafka.getNetwork())
+			.withClasspathResourceMapping("init.sql", "/init.sql", BindMode.READ_ONLY)
+			.withCommand("--init-file", "/init.sql");
+
+	@Container
+	private static StreamApps streamApps = kafkaStreamApps(JdbcSinkTests.class.getSimpleName(), kafka)
+			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("http-source"))
+					.withEnv("SERVER_PORT", String.valueOf(serverPort))
+					.withExposedPorts(serverPort)
+					.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2))))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("jdbc-sink"))
+					.withEnv("JDBC_CONSUMER_COLUMNS", "name,city:address.city,street:address.street")
+					.withEnv("JDBC_CONSUMER_TABLE_NAME", "People")
+					.withEnv("SPRING_DATASOURCE_USERNAME", "test")
+					.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
+					.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
+					.withEnv("SPRING_DATASOURCE_URL",
+							"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test"))
+			.build();
 
 	@BeforeAll
-	static void buildJdbcTemplate() {
+	static void startStreamApps() {
 		HikariDataSource dataSource = new HikariDataSource();
-		dataSource.setDriverClassName(mariadbContainer.getDriverClassName());
-		dataSource.setUsername(mariadbContainer.getUsername());
-		dataSource.setPassword(mariadbContainer.getPassword());
-		dataSource.setJdbcUrl(mariadbContainer.getJdbcUrl());
+		dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
+		dataSource.setUsername(mySQL.getUsername());
+		dataSource.setPassword(mySQL.getPassword());
+		dataSource.setJdbcUrl("jdbc:mysql://localhost:" + mySQL.getMappedPort(3306) + "/test");
 		jdbcTemplate = new JdbcTemplate(dataSource);
 		jdbcTemplate.execute("DELETE FROM People");
 	}
 
 	@Test
 	void postData() {
-		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\": \"Narrow Alley\"}}";
-		ClientResponse response = webClient()
+		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\":\"Narrow Alley\"}}";
+		ClientResponse response = webClient
 				.post()
-				.uri("http://localhost:" + port)
+				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
 				.contentType(MediaType.APPLICATION_JSON)
 				.body(Mono.just(json), String.class)
 				.exchange()
@@ -90,8 +98,10 @@ public class JdbcSinkTests extends AbstractStreamApplicationTests {
 
 		await().atMost(Duration.ofSeconds(30))
 				.untilAsserted(
-						() -> assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) from People", Integer.class))
-								.isOne());
-		assertThat(jdbcTemplate.queryForObject("SELECT name from People", String.class)).isEqualTo("My Name");
+						() -> assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) from People",
+								Integer.class))
+										.isOne());
+		assertThat(jdbcTemplate.queryForObject("SELECT name from People",
+				String.class)).isEqualTo("My Name");
 	}
 }

@@ -31,19 +31,19 @@ import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.fn.test.support.geode.GeodeContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests;
-import org.springframework.cloud.stream.apps.integration.test.support.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.apps.integration.test.support.AbstractStreamApplicationTests.AppLog.appLog;
-import static org.springframework.cloud.stream.apps.integration.test.support.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class GeodeSourceTests extends AbstractStreamApplicationTests {
+public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static final LogMatcher logMatcher = new LogMatcher();
 
@@ -91,15 +91,15 @@ public class GeodeSourceTests extends AbstractStreamApplicationTests {
 	}
 
 	@Container
-	private final DockerComposeContainer environment = new DockerComposeContainer(
-			templateProcessor("source/geode-source-tests.yml", fluentMap()
-					.withEntry("geode.host-addresses", "geode:" + cacheServerPort)
-					.withEntry("geodeHost", localHostAddress())
-					.withEntry("geode.region", "myRegion")).processTemplate())
-							.withLogConsumer("log-sink", appLog("log-sink"))
-							.withLogConsumer("geode-source", geodeLogMatcher)
-							.withLogConsumer("log-sink", logMatcher)
-							.withLocalCompose(true);
+	private final StreamApps streamApps = kafkaStreamApps(this.getClass().getSimpleName(), kafka)
+			.withSourceContainer(new GenericContainer(defaultKafkaImageFor("geode-source"))
+					.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
+					.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
+					.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
+					.withLogConsumer(geodeLogMatcher))
+			.withSinkContainer(new GenericContainer(defaultKafkaImageFor("log-sink"))
+					.withLogConsumer(logMatcher))
+			.build();
 
 	@Test
 	void test() {
