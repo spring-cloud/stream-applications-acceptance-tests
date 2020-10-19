@@ -14,38 +14,33 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test;
-
-import java.time.Duration;
-import java.util.regex.Pattern;
+package org.springframework.cloud.stream.apps.integration.test.kafka.stream;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamApps;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class TikTokTests extends KafkaStreamIntegrationTestSupport {
-	// "MM/dd/yy HH:mm:ss";
-	private final static Pattern DATE_PATTERN = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
+public class KafkaTikTokTests extends KafkaStreamApplicationIntegrationTestSupport {
 
-	private final static LogMatcher logMatcher = new LogMatcher();
+	private static LogMatcher logMatcher = LogMatcher.matchesRegex(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
+			.times(3);
 
 	@Container
-	static StreamApps streamApps = kafkaStreamApps("tikTok", kafka)
-			.withSourceContainer(defaultKafkaContainerFor("time-source"))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink")
-					.withLogConsumer(logMatcher))
+	private static final StreamApps streamApp = kafkaStreamApps(KafkaTikTokTests.class.getSimpleName(), kafka)
+			.withSourceContainer(prepackagedKafkaContainerFor("time-source", VERSION))
+			.withSinkContainer(prepackagedKafkaContainerFor("log-sink", VERSION).withLogConsumer(logMatcher))
 			.build();
 
 	@Test
-	void tiktok() {
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started LogSink")));
-		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(log -> log.matchesRegex(DATE_PATTERN.pattern())));
+	void test() {
+		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
 	}
 }

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.3.3.RELEASE</version>
+		<version>2.3.4.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.springframework.cloud.stream.apps</groupId>
@@ -19,9 +19,7 @@
 		<java-functions.version>1.0.0-SNAPSHOT</java-functions.version>
 		<stream-applications.version>3.0.0-SNAPSHOT</stream-applications.version>
 		<mariadb-client.version>2.6.2</mariadb-client.version>
-		<spring-cloud.version>Hoxton.SR8</spring-cloud.version>
-		<testcontainers.version>1.15.0-rc2</testcontainers.version>
-		<jmustache.version>1.15</jmustache.version>
+		<test-containers.version>1.15.0-rc2</test-containers.version>
 		<maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
 		<disable.checks>false</disable.checks>
 		<maven-checkstyle-plugin.failsOnError>true</maven-checkstyle-plugin.failsOnError>
@@ -44,6 +42,7 @@
 		<wiremock.version>2.27.1</wiremock.version>
 		<aws.version>1.11.415</aws.version>
 		<mysql-connector-java.version>8.0.16</mysql-connector-java.version>
+		<junit-platform-runner.version>1.6.2</junit-platform-runner.version>
 	</properties>
 
 	<dependencies>
@@ -80,22 +79,9 @@
 			<artifactId>kafka</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>org.awaitility</groupId>
-			<artifactId>awaitility</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>mariadb</artifactId>
-			<scope>test</scope>
+			<artifactId>rabbitmq</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
@@ -158,13 +144,22 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-runner</artifactId>
+			<version>${junit-platform-runner.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<forkCount>1C</forkCount>
+					<parallel>all</parallel>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -239,7 +234,7 @@
 			<dependency>
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
-				<version>${testcontainers.version}</version>
+				<version>${test-containers.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

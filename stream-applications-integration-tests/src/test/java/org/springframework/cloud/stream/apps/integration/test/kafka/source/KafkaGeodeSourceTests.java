@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -36,17 +36,14 @@ import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.fn.test.support.geode.GeodeContainer;
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
-import org.springframework.cloud.stream.app.test.integration.StreamApps;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
-
-	private static final LogMatcher logMatcher = new LogMatcher();
-
-	private static final LogMatcher geodeLogMatcher = new LogMatcher();
+public class KafkaGeodeSourceTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	private static final int locatorPort = findAvailablePort();
 
@@ -56,6 +53,8 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static ClientCache clientCache;
 
+	private static LogMatcher logMatcher = LogMatcher.contains("Started GeodeSource");
+
 	@Container
 	private static final GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
 			.withFileFromClasspath("Dockerfile", "geode/Dockerfile")
@@ -64,24 +63,20 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 			locatorPort, cacheServerPort)
 					.withCreateContainerCmdModifier(
 							(Consumer<CreateContainerCmd>) createContainerCmd -> createContainerCmd
+									.withName("apache_geode")
 									.withHostName("geode").withHostConfig(new HostConfig().withPortBindings(
 											new PortBinding(Ports.Binding.bindPort(cacheServerPort),
 													new ExposedPort(cacheServerPort)),
 											new PortBinding(Ports.Binding.bindPort(locatorPort),
 													new ExposedPort(locatorPort)))))
 					.withCommand("tail", "-f", "/dev/null")
-					.withStartupTimeout(Duration.ofMinutes(2));
+					.withStartupTimeout(DEFAULT_DURATION.multipliedBy(2));
 
-	@Container
-	private final StreamApps streamApps = kafkaStreamApps(this.getClass().getSimpleName(), kafka)
-			.withSourceContainer(defaultKafkaContainerFor("geode-source")
-					.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
-					.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
-					.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
-					.withLogConsumer(geodeLogMatcher))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink")
-					.withLogConsumer(logMatcher))
-			.build();
+	private static final StreamAppContainer geodeSource = prepackagedKafkaContainerFor("geode-source", VERSION)
+			.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
+			.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
+			.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
+			.withLogConsumer(logMatcher);
 
 	@BeforeAll
 	static void init() {
@@ -98,16 +93,15 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 		clientRegion = clientCache
 				.createClientRegionFactory(ClientRegionShortcut.PROXY)
 				.create("myRegion");
+		geodeSource.start();
 	}
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofMinutes(2))
-				.until(geodeLogMatcher.verifies(log -> log.contains("Started GeodeSource")));
-		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(log -> log
-						.when(() -> clientRegion.put("hello", "world"))
-						.contains("world")));
+		await().atMost(Duration.ofMinutes(2)).until(logMatcher.matches());
+		clientRegion.put("hello", "world");
+		await().atMost(DEFAULT_DURATION)
+				.until(verifyOutputPayload((String s) -> s.contains("world")));
 	}
 
 	@AfterAll
