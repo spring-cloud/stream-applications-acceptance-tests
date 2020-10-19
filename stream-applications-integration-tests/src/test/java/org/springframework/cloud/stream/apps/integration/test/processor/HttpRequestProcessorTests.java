@@ -52,45 +52,45 @@ public class HttpRequestProcessorTests extends KafkaStreamIntegrationTestSupport
 
 	private static int sourcePort = findAvailablePort();
 
-	@Container
-	private static final StreamApps streamApps = kafkaStreamApps(
-			HttpRequestProcessorTests.class.getSimpleName(), kafka)
-					.withSourceContainer(httpSource(sourcePort))
-					.withProcessorContainer(defaultKafkaContainerFor("http-request-processor")
-							.withEnv("HTTP_REQUEST_URL_EXPRESSION",
-									"'http://" + localHostAddress() + ":" + serverPort + "'")
-							.withEnv("HTTP_REQUEST_HTTP_METHOD_EXPRESSION", "'POST'"))
-					.withSinkContainer(
-							defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
-					.build();
-
-	@BeforeAll
-	static void startServer() throws Exception {
-		server.start(InetAddress.getLocalHost(), serverPort);
-	}
-
-	@Test
-	void get() {
-		server.setDispatcher(new Dispatcher() {
-			@Override
-			public MockResponse dispatch(RecordedRequest recordedRequest) {
-				return new MockResponse().setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-						.setBody("{\"response\":\"" + recordedRequest.getBody().readUtf8() + "\"}")
-						.setResponseCode(HttpStatus.OK.value());
-			}
-		});
-
-		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(log -> log.when(() -> {
-					ClientResponse response = webClient
-							.post()
-							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(sourcePort))
-							.contentType(MediaType.TEXT_PLAIN)
-							.body(Mono.just("ping"), String.class)
-							.exchange()
-							.block();
-					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
-				}).matchesRegex(".*\\{\"response\":\"ping\"\\}")));
-	}
+//	@Container
+//	private static final StreamApps streamApps = kafkaStreamApps(
+//			HttpRequestProcessorTests.class.getSimpleName(), kafka)
+//					.withSourceContainer(httpSource(sourcePort))
+//					.withProcessorContainer(defaultKafkaProcessorContainerFor("http-request-processor")
+//							.withEnv("HTTP_REQUEST_URL_EXPRESSION",
+//									"'http://" + localHostAddress() + ":" + serverPort + "'")
+//							.withEnv("HTTP_REQUEST_HTTP_METHOD_EXPRESSION", "'POST'"))
+//					.withSinkContainer(
+//							defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
+//					.build();
+//
+//	@BeforeAll
+//	static void startServer() throws Exception {
+//		server.start(InetAddress.getLocalHost(), serverPort);
+//	}
+//
+//	@Test
+//	void get() {
+//		server.setDispatcher(new Dispatcher() {
+//			@Override
+//			public MockResponse dispatch(RecordedRequest recordedRequest) {
+//				return new MockResponse().setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+//						.setBody("{\"response\":\"" + recordedRequest.getBody().readUtf8() + "\"}")
+//						.setResponseCode(HttpStatus.OK.value());
+//			}
+//		});
+//
+//		await().atMost(Duration.ofSeconds(30))
+//				.until(logMatcher.verifies(log -> log.when(() -> {
+//					ClientResponse response = webClient
+//							.post()
+//							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(sourcePort))
+//							.contentType(MediaType.TEXT_PLAIN)
+//							.body(Mono.just("ping"), String.class)
+//							.exchange()
+//							.block();
+//					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
+//				}).matchesRegex(".*\\{\"response\":\"ping\"\\}")));
+//	}
 
 }

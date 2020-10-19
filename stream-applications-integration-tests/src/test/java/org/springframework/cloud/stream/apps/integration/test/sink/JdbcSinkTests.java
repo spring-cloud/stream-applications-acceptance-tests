@@ -47,60 +47,60 @@ public class JdbcSinkTests extends KafkaStreamIntegrationTestSupport {
 
 	private static WebClient webClient = WebClient.builder().build();
 
-	@Container
-	private static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
-			.withUsername("test")
-			.withPassword("secret")
-			.withExposedPorts(3306)
-			.withNetwork(kafka.getNetwork())
-			.withClasspathResourceMapping("init.sql", "/init.sql", BindMode.READ_ONLY)
-			.withCommand("--init-file", "/init.sql");
-
-	@Container
-	private static StreamApps streamApps = kafkaStreamApps(JdbcSinkTests.class.getSimpleName(), kafka)
-			.withSourceContainer(defaultKafkaContainerFor("http-source")
-					.withEnv("SERVER_PORT", String.valueOf(serverPort))
-					.withExposedPorts(serverPort)
-					.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2))))
-			.withSinkContainer(defaultKafkaContainerFor("jdbc-sink")
-					.withEnv("JDBC_CONSUMER_COLUMNS", "name,city:address.city,street:address.street")
-					.withEnv("JDBC_CONSUMER_TABLE_NAME", "People")
-					.withEnv("SPRING_DATASOURCE_USERNAME", "test")
-					.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
-					.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
-					.withEnv("SPRING_DATASOURCE_URL",
-							"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test"))
-			.build();
-
-	@BeforeAll
-	static void startStreamApps() {
-		HikariDataSource dataSource = new HikariDataSource();
-		dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
-		dataSource.setUsername(mySQL.getUsername());
-		dataSource.setPassword(mySQL.getPassword());
-		dataSource.setJdbcUrl("jdbc:mysql://localhost:" + mySQL.getMappedPort(3306) + "/test");
-		jdbcTemplate = new JdbcTemplate(dataSource);
-		jdbcTemplate.execute("DELETE FROM People");
-	}
-
-	@Test
-	void postData() {
-		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\":\"Narrow Alley\"}}";
-		ClientResponse response = webClient
-				.post()
-				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(Mono.just(json), String.class)
-				.exchange()
-				.block();
-		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
-
-		await().atMost(Duration.ofSeconds(30))
-				.untilAsserted(
-						() -> assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) from People",
-								Integer.class))
-										.isOne());
-		assertThat(jdbcTemplate.queryForObject("SELECT name from People",
-				String.class)).isEqualTo("My Name");
-	}
+//	@Container
+//	private static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
+//			.withUsername("test")
+//			.withPassword("secret")
+//			.withExposedPorts(3306)
+//			.withNetwork(kafka.getNetwork())
+//			.withClasspathResourceMapping("init.sql", "/init.sql", BindMode.READ_ONLY)
+//			.withCommand("--init-file", "/init.sql");
+//
+//	@Container
+//	private static StreamApps streamApps = kafkaStreamApps(JdbcSinkTests.class.getSimpleName(), kafka)
+//			.withSourceContainer(defaultKafkaContainerFor("http-source")
+//					.withEnv("SERVER_PORT", String.valueOf(serverPort))
+//					.withExposedPorts(serverPort)
+//					.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2))))
+//			.withSinkContainer(defaultKafkaContainerFor("jdbc-sink")
+//					.withEnv("JDBC_CONSUMER_COLUMNS", "name,city:address.city,street:address.street")
+//					.withEnv("JDBC_CONSUMER_TABLE_NAME", "People")
+//					.withEnv("SPRING_DATASOURCE_USERNAME", "test")
+//					.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
+//					.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
+//					.withEnv("SPRING_DATASOURCE_URL",
+//							"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test"))
+//			.build();
+//
+//	@BeforeAll
+//	static void startStreamApps() {
+//		HikariDataSource dataSource = new HikariDataSource();
+//		dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
+//		dataSource.setUsername(mySQL.getUsername());
+//		dataSource.setPassword(mySQL.getPassword());
+//		dataSource.setJdbcUrl("jdbc:mysql://localhost:" + mySQL.getMappedPort(3306) + "/test");
+//		jdbcTemplate = new JdbcTemplate(dataSource);
+//		jdbcTemplate.execute("DELETE FROM People");
+//	}
+//
+//	@Test
+//	void postData() {
+//		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\":\"Narrow Alley\"}}";
+//		ClientResponse response = webClient
+//				.post()
+//				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
+//				.contentType(MediaType.APPLICATION_JSON)
+//				.body(Mono.just(json), String.class)
+//				.exchange()
+//				.block();
+//		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
+//
+//		await().atMost(Duration.ofSeconds(30))
+//				.untilAsserted(
+//						() -> assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) from People",
+//								Integer.class))
+//										.isOne());
+//		assertThat(jdbcTemplate.queryForObject("SELECT name from People",
+//				String.class)).isEqualTo("My Name");
+//	}
 }

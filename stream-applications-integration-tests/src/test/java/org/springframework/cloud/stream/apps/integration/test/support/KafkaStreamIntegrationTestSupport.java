@@ -18,11 +18,11 @@ package org.springframework.cloud.stream.apps.integration.test.support;
 
 import java.time.Duration;
 
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.DockerImageName;
 
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.kafka.AbstractKafkaStreamApplicationIntegrationTests;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppContainer;
 
 public abstract class KafkaStreamIntegrationTestSupport extends AbstractKafkaStreamApplicationIntegrationTests {
 
@@ -30,16 +30,16 @@ public abstract class KafkaStreamIntegrationTestSupport extends AbstractKafkaStr
 
 	protected static final String DOCKER_ORG = "springcloudstream";
 
-	private static DockerImageName defaultKafkaImageFor(String appName) {
-		return DockerImageName.parse(DOCKER_ORG + "/" + appName + "-kafka:" + VERSION);
+	private static String defaultKafkaImageFor(String appName) {
+		return DOCKER_ORG + "/" + appName + "-kafka:" + VERSION;
 	}
 
-	protected static GenericContainer defaultKafkaContainerFor(String appName) {
-		return new GenericContainer(defaultKafkaImageFor(appName));
+	protected static StreamAppContainer defaultKafkaContainerFor(String appName) {
+		return new KafkaStreamAppContainer(defaultKafkaImageFor(appName), kafka);
 	}
 
-	protected static GenericContainer httpSource(int serverPort) {
-		return new GenericContainer(defaultKafkaImageFor("http-source"))
+	protected static StreamAppContainer httpSource(int serverPort) {
+		return defaultKafkaContainerFor("http-source")
 				.withEnv("SERVER_PORT", String.valueOf(serverPort))
 				.withExposedPorts(serverPort)
 				.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(2)));

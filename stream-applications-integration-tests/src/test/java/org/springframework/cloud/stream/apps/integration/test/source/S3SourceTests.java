@@ -39,13 +39,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
-import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 import static org.springframework.cloud.stream.app.test.integration.FluentMap.fluentMap;
-import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
 public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 
@@ -55,7 +54,7 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	private static final GenericContainer minio = new GenericContainer(
-			DockerImageName.parse("minio/minio:RELEASE.2020-09-05T07-14-49Z"))
+			DockerImageName.parse("minio/minio:RELEASE.2020-10-18T21-54-12Z"))
 					.withExposedPorts(9000)
 					.withEnv("MINIO_ACCESS_KEY", "minio")
 					.withEnv("MINIO_SECRET_KEY", "minio123")
@@ -82,30 +81,28 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 
 	}
 
-	private StreamApps streamApps = kafkaStreamApps(S3SourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(defaultKafkaContainerFor("s3-source")
-					.withEnv("S3_SUPPLIER_REMOTE_DIR", "bucket")
-					.withEnv("S3_COMMON_ENDPOINT_URL", "http://" + localHostAddress() + ":" + minio.getMappedPort(9000))
-					.withEnv("S3_COMMON_PATH_STYLE_ACCESS", "true")
-					.withEnv("CLOUD_AWS_STACK_AUTO", "false")
-					.withEnv("CLOUD_AWS_CREDENTIALS_ACCESS_KEY", "minio")
-					.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
-					.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1")
-					.withLogConsumer(logMatcher))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
-			.build();
+	private StreamAppContainer source = defaultKafkaContainerFor("s3-source")
+			.withEnv("S3_SUPPLIER_REMOTE_DIR", "bucket")
+			.withEnv("S3_COMMON_ENDPOINT_URL", "http://" + localHostAddress() + ":" + minio.getMappedPort(9000))
+			.withEnv("S3_COMMON_PATH_STYLE_ACCESS", "true")
+			.withEnv("CLOUD_AWS_STACK_AUTO", "false")
+			.withEnv("CLOUD_AWS_CREDENTIALS_ACCESS_KEY", "minio")
+			.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
+			.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1")
+			.withOutputDestination(this.getClass().getSimpleName());
 
+	//
 	@Test
 	void testLines() {
 		startContainer(
 				fluentMap().withEntry("FILE_CONSUMER_MODE", "lines"));
+		s3Client.createBucket("bucket");
+		s3Client.putObject(new PutObjectRequest("bucket", "test",
+				resourceAsFile("minio/data")));
 
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
-		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
-			s3Client.createBucket("bucket");
-			s3Client.putObject(new PutObjectRequest("bucket", "test",
-					resourceAsFile("minio/data")));
-		}).contains("Bart Simpson")));
+		await().atMost(Duration.ofSeconds(60)).untilTrue(verifyOutputMessage(source.getOutputDestination(),
+				message -> ((String) message.getPayload()).contains("Bart Simpson")));
+
 	}
 
 	@Test
@@ -117,13 +114,12 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 				.withEntry("TASK_LAUNCH_REQUEST_TASK_NAME", "myTask")
 				.withEntry("FILE_CONSUMER_MODE", "ref"));
 
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
-		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
-			s3Client.createBucket("bucket");
-			s3Client.putObject(new PutObjectRequest("bucket", "test",
-					resourceAsFile("minio/data")));
-		}).endsWith(
-				"\\{\"args\":\\[\"filename=/tmp/s3-supplier/test\"\\],\"deploymentProps\":\\{\\},\"name\":\"myTask\"\\}")));
+		s3Client.createBucket("bucket");
+		s3Client.putObject(new PutObjectRequest("bucket", "test",
+				resourceAsFile("minio/data")));
+		await().atMost(Duration.ofSeconds(60)).untilTrue(
+				verifyOutputMessage(source.getOutputDestination(), message -> message.getPayload().equals(
+						"\\{\"args\":\\[\"filename=/tmp/s3-supplier/test\"\\],\"deploymentProps\":\\{\\},\"name\":\"myTask\"\\}")));
 	}
 
 	@Test
@@ -134,17 +130,16 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 						.withEntry("FILE_CONSUMER_MODE", "ref")
 						.withEntry("S3_SUPPLIER_LIST_ONLY", "true"));
 
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started S3Source")));
-		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.when(() -> {
-			s3Client.createBucket("bucket");
-			s3Client.putObject(new PutObjectRequest("bucket", "test",
-					resourceAsFile("minio/data")));
-		}).contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
+		s3Client.createBucket("bucket");
+		s3Client.putObject(new PutObjectRequest("bucket", "test",
+				resourceAsFile("minio/data")));
+		await().atMost(Duration.ofSeconds(60)).untilTrue(verifyOutputMessage(source.getOutputDestination(),
+				message -> ((String) message.getPayload()).contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {
-		streamApps.sourceContainer().withEnv(environment);
-		streamApps.start();
+		source.withEnv(environment);
+		source.start();
 	}
 
 	@AfterEach
@@ -153,6 +148,6 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 			s3Client.deleteObject("bucket", "test");
 			s3Client.deleteBucket("bucket");
 		}
-		streamApps.stop();
+		source.stop();
 	}
 }

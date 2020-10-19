@@ -17,21 +17,20 @@
 package org.springframework.cloud.stream.apps.integration.test.source;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
-import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
 public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 
@@ -39,42 +38,46 @@ public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static WebClient webClient = WebClient.builder().build();
 
-	private static LogMatcher logMatcher = new LogMatcher();
-
 	@Container
-	private static final StreamApps streamApps = kafkaStreamApps(HttpSourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(httpSource(serverPort))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
-			.build();
+	private static final StreamAppContainer source = httpSource(serverPort)
+			.withOutputDestination(HttpSourceTests.class.getSimpleName());
 
 	@Test
-	void plaintext() {
+	void plaintext() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		webClient
+				.post()
+				.uri("http://localhost:" + source.getMappedPort(serverPort))
+				.contentType(MediaType.TEXT_PLAIN)
+				.body(Mono.just("Hello"), String.class)
+				.exchange()
+				.subscribe(r -> {
+					assertThat(r.statusCode().is2xxSuccessful()).isTrue();
+					countDownLatch.countDown();
+				});
+		countDownLatch.await(30, TimeUnit.SECONDS);
 		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(log -> log.when(() -> {
-					ClientResponse response = webClient
-							.post()
-							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
-							.contentType(MediaType.TEXT_PLAIN)
-							.body(Mono.just("Hello"), String.class)
-							.exchange()
-							.block();
-					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
-				}).endsWith("Hello")));
+				.untilTrue(verifyOutputMessage(source.getOutputDestination(), m -> m.getPayload().equals("Hello")));
 	}
 
 	@Test
-	void json() {
+	void json() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		webClient
+				.post()
+				.uri("http://localhost:" + source.getMappedPort(serverPort))
+				.contentType(MediaType.APPLICATION_JSON)
+				.body(Mono.just("{\"Hello\":\"world\"}"), String.class)
+				.exchange()
+				.subscribe(r -> {
+					countDownLatch.countDown();
+					assertThat(r.statusCode().is2xxSuccessful()).isTrue();
+				});
+		countDownLatch.await(30, TimeUnit.SECONDS);
 		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(log -> log.when(() -> {
-					ClientResponse response = webClient
-							.post()
-							.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
-							.contentType(MediaType.APPLICATION_JSON)
-							.body(Mono.just("{\"Hello\":\"world\"}"), String.class)
-							.exchange()
-							.block();
-					assertThat(response.statusCode().is2xxSuccessful()).isTrue();
-				}).matchesRegex(".*\\{\"Hello\":\"world\"\\}")));
+				.untilTrue(verifyOutputMessage(source.getOutputDestination(),
+						m -> m.getPayload().equals("{\"Hello\":\"world\"}")));
 	}
 
 }

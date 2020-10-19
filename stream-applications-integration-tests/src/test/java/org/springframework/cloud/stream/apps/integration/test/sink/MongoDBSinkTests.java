@@ -40,49 +40,49 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
 public class MongoDBSinkTests extends KafkaStreamIntegrationTestSupport {
-
-	private static int serverPort = findAvailablePort();
-
-	private static MongoTemplate mongoTemplate;
-
-	private static WebClient webClient = WebClient.builder().build();
-
-	@Container
-	private static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"))
-			.withExposedPorts(27017)
-			.withStartupTimeout(Duration.ofMinutes(2));
-
-	private static String mongoConnectionString() {
-		return String.format("mongodb://%s:%s/%s", localHostAddress(), mongoDBContainer.getMappedPort(27017), "test");
-	}
-
-	@Container
-	private StreamApps streamApps = kafkaStreamApps(MongoDBSinkTests.class.getSimpleName(), kafka)
-			.withSourceContainer(httpSource(serverPort))
-			.withSinkContainer(defaultKafkaContainerFor("mongodb-sink")
-					.withEnv("MONGO_DB_CONSUMER_COLLECTION", "test")
-					.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString()))
-			.build();
-
-	@BeforeAll
-	static void buildMongoTemplate() {
-		MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(
-				mongoConnectionString());
-		mongoTemplate = new MongoTemplate(mongoDatabaseFactory);
-	}
-
-	@Test
-	void postData() {
-		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\": \"Narrow Alley\"}}";
-		ClientResponse response = webClient
-				.post()
-				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(Mono.just(json), String.class)
-				.exchange()
-				.block(Duration.ofSeconds(30));
-		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
-		List<Document> docs = mongoTemplate.findAll(Document.class, "test");
-		assertThat(docs).allMatch(document -> document.get("name", String.class).equals("My Name"));
-	}
+//
+//	private static int serverPort = findAvailablePort();
+//
+//	private static MongoTemplate mongoTemplate;
+//
+//	private static WebClient webClient = WebClient.builder().build();
+//
+//	@Container
+//	private static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"))
+//			.withExposedPorts(27017)
+//			.withStartupTimeout(Duration.ofMinutes(2));
+//
+//	private static String mongoConnectionString() {
+//		return String.format("mongodb://%s:%s/%s", localHostAddress(), mongoDBContainer.getMappedPort(27017), "test");
+//	}
+//
+//	@Container
+//	private StreamApps streamApps = kafkaStreamApps(MongoDBSinkTests.class.getSimpleName(), kafka)
+//			.withSourceContainer(httpSource(serverPort))
+//			.withSinkContainer(defaultKafkaContainerFor("mongodb-sink")
+//					.withEnv("MONGO_DB_CONSUMER_COLLECTION", "test")
+//					.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString()))
+//			.build();
+//
+//	@BeforeAll
+//	static void buildMongoTemplate() {
+//		MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(
+//				mongoConnectionString());
+//		mongoTemplate = new MongoTemplate(mongoDatabaseFactory);
+//	}
+//
+//	@Test
+//	void postData() {
+//		String json = "{\"name\":\"My Name\",\"address\":{ \"city\": \"Big City\", \"street\": \"Narrow Alley\"}}";
+//		ClientResponse response = webClient
+//				.post()
+//				.uri("http://localhost:" + streamApps.sourceContainer().getMappedPort(serverPort))
+//				.contentType(MediaType.APPLICATION_JSON)
+//				.body(Mono.just(json), String.class)
+//				.exchange()
+//				.block(Duration.ofSeconds(30));
+//		assertThat(response.statusCode().is2xxSuccessful()).isTrue();
+//		List<Document> docs = mongoTemplate.findAll(Document.class, "test");
+//		assertThat(docs).allMatch(document -> document.get("name", String.class).equals("My Name"));
+//	}
 }

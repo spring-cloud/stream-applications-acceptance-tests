@@ -18,22 +18,19 @@ package org.springframework.cloud.stream.apps.integration.test.source;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
-import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
 public class JdbcSourceTests extends KafkaStreamIntegrationTestSupport {
-
-	private static LogMatcher logMatcher = new LogMatcher();
 
 	@Container
 	public static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
@@ -44,22 +41,25 @@ public class JdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 			.withClasspathResourceMapping("init.sql", "/init.sql", BindMode.READ_ONLY)
 			.withCommand("--init-file", "/init.sql");
 
-	@Container
-	private static final StreamApps streamApps = kafkaStreamApps(JdbcSourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(defaultKafkaContainerFor("jdbc-source")
-					.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
-					.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
-					.withEnv("SPRING_DATASOURCE_USERNAME", "test")
-					.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
-					.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
-					.withEnv("SPRING_DATASOURCE_URL",
-							"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test"))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink")
-					.withLogConsumer(logMatcher))
-			.build();
+	private static final StreamAppContainer source = defaultKafkaContainerFor("jdbc-source")
+			.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
+			.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
+			.withEnv("SPRING_DATASOURCE_USERNAME", "test")
+			.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
+			.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
+			.withEnv("SPRING_DATASOURCE_URL",
+					"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test")
+			.withOutputDestination(JdbcSourceTests.class.getSimpleName());
+
+	@BeforeAll
+	static void startSource() {
+		await().atMost(Duration.ofSeconds(60)).until(() -> mySQL.isRunning());
+		source.start();
+	}
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.contains("Bart Simpson")));
+		await().atMost(Duration.ofSeconds(60)).untilTrue(verifyOutputMessage(source.getOutputDestination(),
+				message -> ((String) message.getPayload()).contains("Bart Simpson")));
 	}
 }

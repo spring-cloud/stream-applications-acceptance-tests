@@ -17,9 +17,9 @@
 package org.springframework.cloud.stream.apps.integration.test.source;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -27,12 +27,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
-import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.app.test.integration.FluentMap.fluentMap;
-import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
 public class SftpSourceTests extends KafkaStreamIntegrationTestSupport {
 
@@ -45,34 +43,28 @@ public class SftpSourceTests extends KafkaStreamIntegrationTestSupport {
 			.withClasspathResourceMapping("sftp", "/home/user/remote", BindMode.READ_ONLY)
 			.withStartupTimeout(Duration.ofMinutes(1));
 
-	private StreamApps streamApps = kafkaStreamApps(SftpSourceTests.class.getSimpleName(), kafka)
-			.withSourceContainer(defaultKafkaContainerFor("sftp-source")
-					.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
-					.withEnv("SFTP_SUPPLIER_REMOTE_DIR", "/remote")
-					.withEnv("SFTP_SUPPLIER_FACTORY_USERNAME", "user")
-					.withEnv("SFTP_SUPPLIER_FACTORY_PASSWORD", "pass")
-					.withEnv("SFTP_SUPPLIER_FACTORY_PORT", String.valueOf(sftp.getMappedPort(22)))
-					.withEnv("SFTP_SUPPLIER_FACTORY_HOST", localHostAddress()))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
-			.build();
+	private StreamAppContainer source = defaultKafkaContainerFor("sftp-source")
+			.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
+			.withEnv("SFTP_SUPPLIER_REMOTE_DIR", "/remote")
+			.withEnv("SFTP_SUPPLIER_FACTORY_USERNAME", "user")
+			.withEnv("SFTP_SUPPLIER_FACTORY_PASSWORD", "pass")
+			.withEnv("SFTP_SUPPLIER_FACTORY_PORT", String.valueOf(sftp.getMappedPort(22)))
+			.withEnv("SFTP_SUPPLIER_FACTORY_HOST", localHostAddress())
+			.withOutputDestination(SftpSourceTests.class.getSimpleName());
 
-	// TODO: This fixture supports additional tests with different modes, etc.
+	// // TODO: This fixture supports additional tests with different modes, etc.
 	@Test
 	void test() {
-		startContainer(
-				fluentMap().withEntry("FILE_CONSUMER_MODE", "ref"));
+		startContainer(Collections.singletonMap("FILE_CONSUMER_MODE", "ref"));
 
 		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(logListener -> logListener.endsWith("\"/tmp/sftp-supplier/data.txt\"")));
+				.untilTrue(verifyOutputMessage(source.getOutputDestination(),
+						message -> message.getPayload().equals("\"/tmp/sftp-supplier/data.txt\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {
-		streamApps.sourceContainer().withEnv(environment);
-		streamApps.start();
+		source.withEnv(environment);
+		source.start();
 	}
 
-	@AfterEach
-	void stop() {
-		streamApps.stop();
-	}
 }

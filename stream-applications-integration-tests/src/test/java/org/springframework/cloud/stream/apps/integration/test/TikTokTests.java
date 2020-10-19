@@ -34,18 +34,18 @@ public class TikTokTests extends KafkaStreamIntegrationTestSupport {
 	private final static Pattern DATE_PATTERN = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
 
 	private final static LogMatcher logMatcher = new LogMatcher();
-
-	@Container
-	static StreamApps streamApps = kafkaStreamApps("tikTok", kafka)
-			.withSourceContainer(defaultKafkaContainerFor("time-source"))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink")
-					.withLogConsumer(logMatcher))
-			.build();
-
-	@Test
-	void tiktok() {
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started LogSink")));
-		await().atMost(Duration.ofSeconds(30))
-				.until(logMatcher.verifies(log -> log.matchesRegex(DATE_PATTERN.pattern())));
-	}
+//
+//	@Container
+//	static StreamApps streamApps = kafkaStreamApps("tikTok", kafka)
+//			.withSourceContainer(defaultKafkaContainerFor("time-source"))
+//			.withSinkContainer(defaultKafkaContainerFor("log-sink")
+//					.withLogConsumer(logMatcher))
+//			.build();
+//
+//	@Test
+//	void tiktok() {
+//		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started LogSink")));
+//		await().atMost(Duration.ofSeconds(30))
+//				.until(logMatcher.verifies(log -> log.matchesRegex(DATE_PATTERN.pattern())));
+//	}
 }
