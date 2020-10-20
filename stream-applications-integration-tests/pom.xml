@@ -19,8 +19,7 @@
 		<java-functions.version>1.0.0-SNAPSHOT</java-functions.version>
 		<stream-applications.version>3.0.0-SNAPSHOT</stream-applications.version>
 		<mariadb-client.version>2.6.2</mariadb-client.version>
-		<spring-cloud.version>Hoxton.SR8</spring-cloud.version>
-		<testcontainers.version>1.15.0-rc2</testcontainers.version>
+		<test-containers.version>1.15.0-rc2</test-containers.version>
 		<maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
 		<disable.checks>false</disable.checks>
 		<maven-checkstyle-plugin.failsOnError>true</maven-checkstyle-plugin.failsOnError>
@@ -77,18 +76,6 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>kafka</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.awaitility</groupId>
-			<artifactId>awaitility</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -154,24 +141,6 @@
 	</dependencies>
 	<build>
 		<plugins>
-<!--			<plugin>-->
-<!--				<groupId>org.apache.maven.plugins</groupId>-->
-<!--				<artifactId>maven-surefire-plugin</artifactId>-->
-<!--				<version>3.0.0-M4</version>-->
-<!--				<configuration>-->
-<!--					<includes>-->
-<!--						<include>**/*Tests.java</include>-->
-<!--						<include>**/*Test.java</include>-->
-<!--					</includes>-->
-<!--				</configuration>-->
-<!--				<dependencies>-->
-<!--					<dependency>-->
-<!--						<groupId>org.junit.jupiter</groupId>-->
-<!--						<artifactId>junit-jupiter-engine</artifactId>-->
-<!--						<version>5.5.2</version>-->
-<!--					</dependency>-->
-<!--				</dependencies>-->
-<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -246,7 +215,7 @@
 			<dependency>
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
-				<version>${testcontainers.version}</version>
+				<version>${test-containers.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
