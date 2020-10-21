@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.stream;
-
-import java.time.Duration;
+package org.springframework.cloud.stream.apps.integration.test.kafka.stream;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.BindMode;
@@ -26,15 +24,15 @@ import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamApps;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
 
-public class JdbcSourceLogSinkTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaJdbcLogStreamTests extends KafkaStreamIntegrationTestSupport {
 
-	private static LogMatcher logMatcher = new LogMatcher();
+	private static LogMatcher logMatcher = LogMatcher.contains("Bart Simpson");
 
 	@Container
 	public static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
@@ -47,20 +45,20 @@ public class JdbcSourceLogSinkTests extends KafkaStreamIntegrationTestSupport {
 			.withCommand("--init-file", "/init.sql");
 
 	@Container
-	private static final StreamApps streamApp = kafkaStreamApps(JdbcSourceLogSinkTests.class.getSimpleName(), kafka)
+	private static final StreamApps streamApp = kafkaStreamApps(KafkaJdbcLogStreamTests.class.getSimpleName(), kafka)
 			.withSourceContainer(defaultKafkaContainerFor("jdbc-source")
 					.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
 					.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
 					.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
 					.withEnv("SPRING_DATASOURCE_USERNAME", "test")
 					.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
-					.withEnv("SPRING_DATASOURCE_URL", "jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test")
-					.withLogConsumer(logMatcher))
+					.withEnv("SPRING_DATASOURCE_URL",
+							"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test"))
 			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
 			.build();
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofSeconds(30)).until(logMatcher.verifies(log -> log.contains("Bart Simpson")));
+		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
 	}
 }

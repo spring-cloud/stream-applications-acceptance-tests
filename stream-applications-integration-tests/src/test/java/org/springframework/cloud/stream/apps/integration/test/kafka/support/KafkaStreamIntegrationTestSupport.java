@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.support;
+package org.springframework.cloud.stream.apps.integration.test.kafka.support;
 
 import java.time.Duration;
 
@@ -29,6 +29,8 @@ public abstract class KafkaStreamIntegrationTestSupport extends AbstractKafkaStr
 	protected static final String VERSION = "3.0.0-SNAPSHOT";
 
 	protected static final String DOCKER_ORG = "springcloudstream";
+
+	protected static Duration DEFAULT_DURATION = Duration.ofMinutes(1);
 
 	private static String defaultKafkaImageFor(String appName) {
 		return DOCKER_ORG + "/" + appName + "-kafka:" + VERSION;

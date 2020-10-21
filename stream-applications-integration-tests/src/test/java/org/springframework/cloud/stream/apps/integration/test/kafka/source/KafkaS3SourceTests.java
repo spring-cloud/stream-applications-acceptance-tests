@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -38,19 +37,16 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 import static org.springframework.cloud.stream.app.test.integration.FluentMap.fluentMap;
 
-public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static AmazonS3 s3Client;
-
-	private static LogMatcher logMatcher = new LogMatcher();
 
 	@Container
 	private static final GenericContainer minio = new GenericContainer(
@@ -100,8 +96,8 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 
-		await().atMost(Duration.ofSeconds(60)).untilTrue(verifyOutputMessage(source.getOutputDestination(),
-				message -> ((String) message.getPayload()).contains("Bart Simpson")));
+		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(source.getOutputDestination(),
+				(String s) -> s.contains("Bart Simpson")));
 
 	}
 
@@ -117,8 +113,8 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
-		await().atMost(Duration.ofSeconds(60)).untilTrue(
-				verifyOutputMessage(source.getOutputDestination(), message -> message.getPayload().equals(
+		await().atMost(DEFAULT_DURATION).untilTrue(
+				verifyOutputPayload(source.getOutputDestination(), s -> s.equals(
 						"\\{\"args\":\\[\"filename=/tmp/s3-supplier/test\"\\],\"deploymentProps\":\\{\\},\"name\":\"myTask\"\\}")));
 	}
 
@@ -133,8 +129,8 @@ public class S3SourceTests extends KafkaStreamIntegrationTestSupport {
 		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
-		await().atMost(Duration.ofSeconds(60)).untilTrue(verifyOutputMessage(source.getOutputDestination(),
-				message -> ((String) message.getPayload()).contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
+		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(source.getOutputDestination(),
+				(String s) -> s.contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {

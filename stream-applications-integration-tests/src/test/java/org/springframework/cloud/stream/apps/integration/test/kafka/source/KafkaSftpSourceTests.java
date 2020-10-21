@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -26,22 +25,19 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 
-public class SftpSourceTests extends KafkaStreamIntegrationTestSupport {
-
-	private static LogMatcher logMatcher = new LogMatcher();
+public class KafkaSftpSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	private static final GenericContainer sftp = new GenericContainer(DockerImageName.parse("atmoz/sftp"))
 			.withExposedPorts(22)
 			.withCommand("user:pass:::remote")
 			.withClasspathResourceMapping("sftp", "/home/user/remote", BindMode.READ_ONLY)
-			.withStartupTimeout(Duration.ofMinutes(1));
+			.withStartupTimeout(DEFAULT_DURATION);
 
 	private StreamAppContainer source = defaultKafkaContainerFor("sftp-source")
 			.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
@@ -50,16 +46,16 @@ public class SftpSourceTests extends KafkaStreamIntegrationTestSupport {
 			.withEnv("SFTP_SUPPLIER_FACTORY_PASSWORD", "pass")
 			.withEnv("SFTP_SUPPLIER_FACTORY_PORT", String.valueOf(sftp.getMappedPort(22)))
 			.withEnv("SFTP_SUPPLIER_FACTORY_HOST", localHostAddress())
-			.withOutputDestination(SftpSourceTests.class.getSimpleName());
+			.withOutputDestination(KafkaSftpSourceTests.class.getSimpleName());
 
-	// // TODO: This fixture supports additional tests with different modes, etc.
+	// TODO: This fixture supports additional tests with different modes, etc.
 	@Test
 	void test() {
 		startContainer(Collections.singletonMap("FILE_CONSUMER_MODE", "ref"));
 
-		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(verifyOutputMessage(source.getOutputDestination(),
-						message -> message.getPayload().equals("\"/tmp/sftp-supplier/data.txt\"")));
+		await().atMost(DEFAULT_DURATION)
+				.untilTrue(verifyOutputPayload(source.getOutputDestination(),
+						(String s) -> s.equals("\"/tmp/sftp-supplier/data.txt\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {

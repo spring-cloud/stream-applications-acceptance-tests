@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -37,12 +37,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.springframework.cloud.fn.test.support.geode.GeodeContainer;
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 
-public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaGeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static final int locatorPort = findAvailablePort();
 
@@ -52,7 +51,7 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static ClientCache clientCache;
 
-	private static LogMatcher logMatcher = new LogMatcher();
+	private static LogMatcher logMatcher = LogMatcher.contains("Started GeodeSource");
 
 	@Container
 	private static final GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
@@ -62,21 +61,21 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 			locatorPort, cacheServerPort)
 					.withCreateContainerCmdModifier(
 							(Consumer<CreateContainerCmd>) createContainerCmd -> createContainerCmd
+									.withName("apache_geode")
 									.withHostName("geode").withHostConfig(new HostConfig().withPortBindings(
 											new PortBinding(Ports.Binding.bindPort(cacheServerPort),
 													new ExposedPort(cacheServerPort)),
 											new PortBinding(Ports.Binding.bindPort(locatorPort),
 													new ExposedPort(locatorPort)))))
 					.withCommand("tail", "-f", "/dev/null")
-					.withStartupTimeout(Duration.ofMinutes(2));
+					.withStartupTimeout(DEFAULT_DURATION.multipliedBy(2));
 
 	private static final StreamAppContainer geodeSource = defaultKafkaContainerFor("geode-source")
 			.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
 			.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
 			.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
-			.withLogConsumer(appLog("geode-source"))
 			.withLogConsumer(logMatcher)
-			.withOutputDestination(GeodeSourceTests.class.getSimpleName());
+			.withOutputDestination(KafkaGeodeSourceTests.class.getSimpleName());
 
 	@BeforeAll
 	static void init() {
@@ -98,11 +97,11 @@ public class GeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.verifies(log -> log.contains("Started GeodeSource")));
+		await().atMost(Duration.ofMinutes(2)).until(logMatcher.matches());
 		clientRegion.put("hello", "world");
-		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(verifyOutputMessage(geodeSource.getOutputDestination(),
-						message -> ((String) message.getPayload()).contains("world")));
+		await().atMost(DEFAULT_DURATION)
+				.untilTrue(verifyOutputPayload(geodeSource.getOutputDestination(),
+						(String s) -> s.contains("world")));
 	}
 
 	@AfterAll

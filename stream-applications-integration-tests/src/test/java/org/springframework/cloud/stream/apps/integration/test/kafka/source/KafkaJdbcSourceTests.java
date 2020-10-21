@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
-
-import java.time.Duration;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -26,11 +24,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 
-public class JdbcSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaJdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	public static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
@@ -49,17 +47,17 @@ public class JdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 			.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
 			.withEnv("SPRING_DATASOURCE_URL",
 					"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test")
-			.withOutputDestination(JdbcSourceTests.class.getSimpleName());
+			.withOutputDestination(KafkaJdbcSourceTests.class.getSimpleName());
 
 	@BeforeAll
 	static void startSource() {
-		await().atMost(Duration.ofSeconds(60)).until(() -> mySQL.isRunning());
+		await().atMost(DEFAULT_DURATION).until(() -> mySQL.isRunning());
 		source.start();
 	}
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofSeconds(60)).untilTrue(verifyOutputMessage(source.getOutputDestination(),
-				message -> ((String) message.getPayload()).contains("Bart Simpson")));
+		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(source.getOutputDestination(),
+				(String s) -> s.contains("Bart Simpson")));
 	}
 }

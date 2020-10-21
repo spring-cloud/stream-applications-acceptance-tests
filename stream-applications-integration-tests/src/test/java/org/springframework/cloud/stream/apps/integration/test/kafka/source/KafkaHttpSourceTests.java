@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaHttpSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	private static int serverPort = findAvailablePort();
 
@@ -40,12 +41,12 @@ public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Container
 	private static final StreamAppContainer source = httpSource(serverPort)
-			.withOutputDestination(HttpSourceTests.class.getSimpleName());
+			.withOutputDestination(KafkaHttpSourceTests.class.getSimpleName());
 
 	@Test
 	void plaintext() throws InterruptedException {
 		CountDownLatch countDownLatch = new CountDownLatch(1);
-
+		AtomicReference<HttpStatus> httpStatus = new AtomicReference<>();
 		webClient
 				.post()
 				.uri("http://localhost:" + source.getMappedPort(serverPort))
@@ -53,12 +54,13 @@ public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 				.body(Mono.just("Hello"), String.class)
 				.exchange()
 				.subscribe(r -> {
-					assertThat(r.statusCode().is2xxSuccessful()).isTrue();
+					httpStatus.set(r.statusCode());
 					countDownLatch.countDown();
 				});
 		countDownLatch.await(30, TimeUnit.SECONDS);
-		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(verifyOutputMessage(source.getOutputDestination(), m -> m.getPayload().equals("Hello")));
+		assertThat(httpStatus.get().is2xxSuccessful()).isTrue();
+		await().atMost(DEFAULT_DURATION)
+				.untilTrue(verifyOutputPayload(source.getOutputDestination(), s -> s.equals("Hello")));
 	}
 
 	@Test
@@ -75,9 +77,9 @@ public class HttpSourceTests extends KafkaStreamIntegrationTestSupport {
 					assertThat(r.statusCode().is2xxSuccessful()).isTrue();
 				});
 		countDownLatch.await(30, TimeUnit.SECONDS);
-		await().atMost(Duration.ofSeconds(30))
-				.untilTrue(verifyOutputMessage(source.getOutputDestination(),
-						m -> m.getPayload().equals("{\"Hello\":\"world\"}")));
+		await().atMost(DEFAULT_DURATION)
+				.untilTrue(verifyOutputPayload(source.getOutputDestination(),
+						s -> s.equals("{\"Hello\":\"world\"}")));
 	}
 
 }

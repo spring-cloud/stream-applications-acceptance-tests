@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.source;
+package org.springframework.cloud.stream.apps.integration.test.kafka.source;
 
-import java.time.Duration;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
@@ -25,27 +24,27 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 
 @Testcontainers
-public class TimeSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaTimeSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	// "MM/dd/yy HH:mm:ss";
 	private final static Pattern pattern = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
 
-	static LogMatcher logMatcher = new LogMatcher();
+	static LogMatcher logMatcher = LogMatcher.contains("Started TimeSource");
 
 	@Container
 	static StreamAppContainer timeSource = defaultKafkaContainerFor("time-source")
 			.withLogConsumer(logMatcher)
-			.withOutputDestination(TimeSourceTests.class.getSimpleName());
+			.withOutputDestination(KafkaTimeSourceTests.class.getSimpleName());
 
 	@Test
 	void test() {
-		await().atMost(Duration.ofMinutes(1)).until(logMatcher.verifies(log -> log.contains("Started TimeSource")));
-		await().atMost(Duration.ofMinutes(2)).untilTrue(verifyOutputMessage(timeSource.getOutputDestination(),
-				message -> pattern.matcher((String) message.getPayload()).matches()));
+		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
+		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(timeSource.getOutputDestination(),
+				(String s) -> pattern.matcher(s).matches()));
 	}
 }
