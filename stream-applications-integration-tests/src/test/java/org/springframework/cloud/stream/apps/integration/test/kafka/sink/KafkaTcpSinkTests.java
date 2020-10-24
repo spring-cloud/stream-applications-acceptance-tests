@@ -31,12 +31,14 @@ import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaTcpSinkTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaTcpSinkTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	private static final int tcpPort = findAvailablePort();
 
@@ -48,8 +50,7 @@ public class KafkaTcpSinkTests extends KafkaStreamIntegrationTestSupport {
 	private KafkaTemplate kafkaTemplate;
 
 	@Container
-	private static StreamAppContainer sink = defaultKafkaContainerFor("tcp-sink")
-			.withInputDestination(KafkaTcpSinkTests.class.getSimpleName())
+	private static StreamAppContainer sink = prepackagedKafkaContainerFor("tcp-sink", VERSION)
 			.withEnv("TCP_CONSUMER_HOST", localHostAddress())
 			.withEnv("TCP_PORT", String.valueOf(tcpPort))
 			.withEnv("TCP_CONSUMER_ENCODER", "CRLF");
@@ -61,8 +62,8 @@ public class KafkaTcpSinkTests extends KafkaStreamIntegrationTestSupport {
 				socket = new ServerSocket(tcpPort, 50, InetAddress.getLocalHost()).accept();
 				socketReady.set(true);
 			}
-			catch (IOException exception) {
-				exception.printStackTrace();
+			catch (IOException e) {
+				throw new RuntimeException(e.getMessage(), e);
 			}
 		}).start();
 	}

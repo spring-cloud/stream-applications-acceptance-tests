@@ -28,7 +28,7 @@ import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,8 +37,10 @@ import org.springframework.messaging.MessageHeaders;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaHttpRequestProcessorTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaHttpRequestProcessorTests extends KafkaStreamApplicationIntegrationTestSupport {
 	private static MockWebServer server = new MockWebServer();
 
 	private static int serverPort = findAvailablePort();
@@ -47,9 +49,7 @@ public class KafkaHttpRequestProcessorTests extends KafkaStreamIntegrationTestSu
 	private KafkaTemplate kafkaTemplate;
 
 	@Container
-	private static StreamAppContainer processor = defaultKafkaContainerFor("http-request-processor")
-			.withInputDestination(KafkaHttpRequestProcessorTests.class.getSimpleName() + "_in")
-			.withOutputDestination(KafkaHttpRequestProcessorTests.class.getSimpleName() + "_out")
+	private static StreamAppContainer processor = prepackagedKafkaContainerFor("http-request-processor", VERSION)
 			.withLogConsumer(appLog("http-request-processor"))
 			.withEnv("HTTP_REQUEST_URL_EXPRESSION", "'http://" + localHostAddress() + ":" + serverPort + "'")
 			.withEnv("HTTP_REQUEST_HTTP_METHOD_EXPRESSION", "'POST'");
@@ -71,8 +71,8 @@ public class KafkaHttpRequestProcessorTests extends KafkaStreamIntegrationTestSu
 			}
 		});
 		kafkaTemplate.send(processor.getInputDestination(), "ping");
-		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputMessage(processor.getOutputDestination(),
-				message -> message.getPayload().equals("{\"response\":\"ping\"}")
+		await().atMost(DEFAULT_DURATION)
+				.until(verifyOutputMessage(message -> message.getPayload().equals("{\"response\":\"ping\"}")
 						&& message.getHeaders().get(MessageHeaders.CONTENT_TYPE)
 								.equals(MediaType.APPLICATION_JSON_VALUE)));
 	}

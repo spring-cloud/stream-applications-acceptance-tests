@@ -20,28 +20,44 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import reactor.core.publisher.Mono;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.TestTopicListener;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaHttpSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaHttpSourceTests extends KafkaStreamApplicationIntegrationTestSupport {
+
+	@Autowired
+	TestTopicListener testTopicListener;
 
 	private static int serverPort = findAvailablePort();
 
 	private static WebClient webClient = WebClient.builder().build();
 
 	@Container
-	private static final StreamAppContainer source = httpSource(serverPort)
-			.withOutputDestination(KafkaHttpSourceTests.class.getSimpleName());
+	private final StreamAppContainer source = prepackagedKafkaContainerFor("http-source", VERSION)
+			.withEnv("SERVER_PORT", String.valueOf(serverPort))
+			.withExposedPorts(serverPort)
+			.waitingFor(Wait.forListeningPort().withStartupTimeout(DEFAULT_DURATION));
+
+	@AfterEach
+	void reset() {
+		testTopicListener.clearOutputVerifiers();
+	}
 
 	@Test
 	void plaintext() throws InterruptedException {
@@ -60,11 +76,12 @@ public class KafkaHttpSourceTests extends KafkaStreamIntegrationTestSupport {
 		countDownLatch.await(30, TimeUnit.SECONDS);
 		assertThat(httpStatus.get().is2xxSuccessful()).isTrue();
 		await().atMost(DEFAULT_DURATION)
-				.untilTrue(verifyOutputPayload(source.getOutputDestination(), s -> s.equals("Hello")));
+				.until(verifyOutputPayload(s -> s.equals("Hello")));
 	}
 
 	@Test
 	void json() throws InterruptedException {
+
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 		webClient
 				.post()
@@ -78,8 +95,7 @@ public class KafkaHttpSourceTests extends KafkaStreamIntegrationTestSupport {
 				});
 		countDownLatch.await(30, TimeUnit.SECONDS);
 		await().atMost(DEFAULT_DURATION)
-				.untilTrue(verifyOutputPayload(source.getOutputDestination(),
-						s -> s.equals("{\"Hello\":\"world\"}")));
+				.until(verifyOutputPayload(s -> s.equals("{\"Hello\":\"world\"}")));
 	}
 
 }

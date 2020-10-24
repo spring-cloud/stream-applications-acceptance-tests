@@ -14,34 +14,38 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.rabbitmq.stream;
+package org.springframework.cloud.stream.apps.integration.test.rabbitmq.source;
+
+import java.time.Duration;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
-import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
-import static org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamApps.rabbitMQStreamApps;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class RabbitMQTikTokTests extends RabbitMQStreamApplicationIntegrationTestSupport {
+@Testcontainers
+public class RabbitMQTimeSourceTests extends RabbitMQStreamApplicationIntegrationTestSupport {
 
-	private static LogMatcher logMatcher = LogMatcher.matchesRegex(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
-			.times(3);
+	// "MM/dd/yy HH:mm:ss";
+	private final static Pattern pattern = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
+
+	static LogMatcher logMatcher = LogMatcher.contains("Started TimeSource");
 
 	@Container
-	private static final StreamApps streamApp = rabbitMQStreamApps(RabbitMQTikTokTests.class.getSimpleName(), rabbitmq)
-			.withSourceContainer(prepackagedRabbitMQContainerFor("time-source", VERSION))
-			.withSinkContainer(prepackagedRabbitMQContainerFor("log-sink", VERSION)
-					.withLogConsumer(logMatcher))
-			.build();
+	static StreamAppContainer timeSource = prepackagedRabbitMQContainerFor("time-source", VERSION)
+			.withLogConsumer(logMatcher);
 
 	@Test
 	void test() {
 		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
+		await().atMost(DEFAULT_DURATION).pollInterval(Duration.ofSeconds(1)).until(verifyOutputPayload((String s) -> pattern.matcher(s).matches()));
 	}
 }

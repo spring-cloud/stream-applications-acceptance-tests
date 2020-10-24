@@ -29,7 +29,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -37,8 +37,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaMongoDBSinkTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaMongoDBSinkTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	private static MongoTemplate mongoTemplate;
 
@@ -56,10 +58,9 @@ public class KafkaMongoDBSinkTests extends KafkaStreamIntegrationTestSupport {
 	}
 
 	@Container
-	private StreamAppContainer sink = defaultKafkaContainerFor("mongodb-sink")
+	private StreamAppContainer sink = prepackagedKafkaContainerFor("mongodb-sink", VERSION)
 			.withEnv("MONGO_DB_CONSUMER_COLLECTION", "test")
-			.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString())
-			.withInputDestination(this.getClass().getSimpleName());
+			.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString());
 
 	@BeforeAll
 	static void buildMongoTemplate() {

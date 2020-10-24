@@ -24,11 +24,14 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaJdbcSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaJdbcSourceTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	@Container
 	public static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
@@ -36,18 +39,18 @@ public class KafkaJdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 			.withPassword("secret")
 			.withExposedPorts(3306)
 			.withNetwork(kafka.getNetwork())
+			.withNetworkAliases("mysql-for-source")
+			.withLogConsumer(appLog("mysql-for-source"))
 			.withClasspathResourceMapping("init.sql", "/init.sql", BindMode.READ_ONLY)
 			.withCommand("--init-file", "/init.sql");
 
-	private static final StreamAppContainer source = defaultKafkaContainerFor("jdbc-source")
+	private static final StreamAppContainer source = prepackagedKafkaContainerFor("jdbc-source", VERSION)
 			.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
 			.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
 			.withEnv("SPRING_DATASOURCE_USERNAME", "test")
 			.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
 			.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
-			.withEnv("SPRING_DATASOURCE_URL",
-					"jdbc:mysql://" + mySQL.getNetworkAliases().get(0) + ":3306/test")
-			.withOutputDestination(KafkaJdbcSourceTests.class.getSimpleName());
+			.withEnv("SPRING_DATASOURCE_URL", "jdbc:mariadb://mysql-for-source:3306/test");
 
 	@BeforeAll
 	static void startSource() {
@@ -57,7 +60,7 @@ public class KafkaJdbcSourceTests extends KafkaStreamIntegrationTestSupport {
 
 	@Test
 	void test() {
-		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(source.getOutputDestination(),
-				(String s) -> s.contains("Bart Simpson")));
+		await().atMost(DEFAULT_DURATION)
+				.until(verifyOutputPayload((String s) -> s.contains("Bart Simpson")));
 	}
 }

@@ -21,21 +21,24 @@ import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamApps;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaTikTokTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaTikTokTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	private static LogMatcher logMatcher = LogMatcher.matchesRegex(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
 			.times(3);
 
 	@Container
 	private static final StreamApps streamApp = kafkaStreamApps(KafkaTikTokTests.class.getSimpleName(), kafka)
-			.withSourceContainer(defaultKafkaContainerFor("time-source"))
-			.withSinkContainer(defaultKafkaContainerFor("log-sink").withLogConsumer(logMatcher))
+			.withSourceContainer(prepackagedKafkaContainerFor("time-source", VERSION))
+			.withSinkContainer(prepackagedKafkaContainerFor("log-sink", VERSION).withLogConsumer(logMatcher))
 			.build();
+
 	@Test
 	void test() {
 		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());

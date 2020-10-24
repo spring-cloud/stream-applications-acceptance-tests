@@ -42,6 +42,7 @@
 		<wiremock.version>2.27.1</wiremock.version>
 		<aws.version>1.11.415</aws.version>
 		<mysql-connector-java.version>8.0.16</mysql-connector-java.version>
+		<junit-platform-runner.version>1.6.2</junit-platform-runner.version>
 	</properties>
 
 	<dependencies>
@@ -142,6 +143,12 @@
 			<artifactId>spring-boot-starter-jdbc</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-runner</artifactId>
+			<version>${junit-platform-runner.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -149,7 +156,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<forkCount>2</forkCount>
+					<forkCount>1C</forkCount>
+					<parallel>all</parallel>
 				</configuration>
 			</plugin>
 			<plugin>

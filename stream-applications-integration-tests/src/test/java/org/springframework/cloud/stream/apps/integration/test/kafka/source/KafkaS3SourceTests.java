@@ -37,16 +37,23 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.TestTopicListener;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 import static org.springframework.cloud.stream.app.test.integration.FluentMap.fluentMap;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaS3SourceTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	private static AmazonS3 s3Client;
+
+	@Autowired
+	TestTopicListener testTopicListener;
 
 	@Container
 	private static final GenericContainer minio = new GenericContainer(
@@ -77,15 +84,14 @@ public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
 
 	}
 
-	private StreamAppContainer source = defaultKafkaContainerFor("s3-source")
+	private StreamAppContainer source = prepackagedKafkaContainerFor("s3-source", VERSION)
 			.withEnv("S3_SUPPLIER_REMOTE_DIR", "bucket")
 			.withEnv("S3_COMMON_ENDPOINT_URL", "http://" + localHostAddress() + ":" + minio.getMappedPort(9000))
 			.withEnv("S3_COMMON_PATH_STYLE_ACCESS", "true")
 			.withEnv("CLOUD_AWS_STACK_AUTO", "false")
 			.withEnv("CLOUD_AWS_CREDENTIALS_ACCESS_KEY", "minio")
 			.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
-			.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1")
-			.withOutputDestination(this.getClass().getSimpleName());
+			.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1");
 
 	//
 	@Test
@@ -96,8 +102,7 @@ public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 
-		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(source.getOutputDestination(),
-				(String s) -> s.contains("Bart Simpson")));
+		await().atMost(DEFAULT_DURATION).until(verifyOutputPayload((String s) -> s.contains("Bart Simpson")));
 
 	}
 
@@ -113,9 +118,8 @@ public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
 		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
-		await().atMost(DEFAULT_DURATION).untilTrue(
-				verifyOutputPayload(source.getOutputDestination(), s -> s.equals(
-						"\\{\"args\":\\[\"filename=/tmp/s3-supplier/test\"\\],\"deploymentProps\":\\{\\},\"name\":\"myTask\"\\}")));
+		await().atMost(DEFAULT_DURATION).until(verifyOutputPayload(s -> s.equals(
+				"{\"args\":[\"filename=/tmp/s3-supplier/test\"],\"deploymentProps\":{},\"name\":\"myTask\"}")));
 	}
 
 	@Test
@@ -129,8 +133,8 @@ public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
 		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
-		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(source.getOutputDestination(),
-				(String s) -> s.contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
+		await().atMost(DEFAULT_DURATION)
+				.until(verifyOutputPayload((String s) -> s.contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {
@@ -145,5 +149,6 @@ public class KafkaS3SourceTests extends KafkaStreamIntegrationTestSupport {
 			s3Client.deleteBucket("bucket");
 		}
 		source.stop();
+		testTopicListener.clearOutputVerifiers();
 	}
 }

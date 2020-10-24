@@ -37,11 +37,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.springframework.cloud.fn.test.support.geode.GeodeContainer;
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-public class KafkaGeodeSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaGeodeSourceTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	private static final int locatorPort = findAvailablePort();
 
@@ -70,12 +72,11 @@ public class KafkaGeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 					.withCommand("tail", "-f", "/dev/null")
 					.withStartupTimeout(DEFAULT_DURATION.multipliedBy(2));
 
-	private static final StreamAppContainer geodeSource = defaultKafkaContainerFor("geode-source")
+	private static final StreamAppContainer geodeSource = prepackagedKafkaContainerFor("geode-source", VERSION)
 			.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
 			.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
 			.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
-			.withLogConsumer(logMatcher)
-			.withOutputDestination(KafkaGeodeSourceTests.class.getSimpleName());
+			.withLogConsumer(logMatcher);
 
 	@BeforeAll
 	static void init() {
@@ -100,8 +101,7 @@ public class KafkaGeodeSourceTests extends KafkaStreamIntegrationTestSupport {
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.matches());
 		clientRegion.put("hello", "world");
 		await().atMost(DEFAULT_DURATION)
-				.untilTrue(verifyOutputPayload(geodeSource.getOutputDestination(),
-						(String s) -> s.contains("world")));
+				.until(verifyOutputPayload((String s) -> s.contains("world")));
 	}
 
 	@AfterAll

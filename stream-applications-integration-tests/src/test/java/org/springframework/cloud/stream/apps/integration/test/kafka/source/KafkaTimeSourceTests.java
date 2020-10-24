@@ -24,12 +24,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.apps.integration.test.kafka.support.KafkaStreamIntegrationTestSupport;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApplicationIntegrationTestSupport;
 
 import static org.awaitility.Awaitility.await;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @Testcontainers
-public class KafkaTimeSourceTests extends KafkaStreamIntegrationTestSupport {
+public class KafkaTimeSourceTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	// "MM/dd/yy HH:mm:ss";
 	private final static Pattern pattern = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
@@ -37,14 +39,11 @@ public class KafkaTimeSourceTests extends KafkaStreamIntegrationTestSupport {
 	static LogMatcher logMatcher = LogMatcher.contains("Started TimeSource");
 
 	@Container
-	static StreamAppContainer timeSource = defaultKafkaContainerFor("time-source")
-			.withLogConsumer(logMatcher)
-			.withOutputDestination(KafkaTimeSourceTests.class.getSimpleName());
-
+	static StreamAppContainer timeSource = prepackagedKafkaContainerFor("time-source", VERSION)
+			.withLogConsumer(logMatcher);
 	@Test
 	void test() {
 		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
-		await().atMost(DEFAULT_DURATION).untilTrue(verifyOutputPayload(timeSource.getOutputDestination(),
-				(String s) -> pattern.matcher(s).matches()));
+		await().atMost(DEFAULT_DURATION).until(verifyOutputPayload((String s) -> pattern.matcher(s).matches()));
 	}
 }
