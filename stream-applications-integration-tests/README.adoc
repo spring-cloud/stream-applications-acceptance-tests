@@ -3,39 +3,39 @@
 This contains integration tests for pre-packaged stream-applications for Docker using https://www.testcontainers.org/[TestContainers].
 These are end-to-end integration tests running apps and required resources, using docker-compose.
 The goal is to have an end-to-end integration test for each pre-packaged application.
-We don't aim to test different configuration options, as this is the responsibility of the stream applications.
+We don't aim to test all different configuration options, as this is the responsibility of the stream application and function components.
 One of the major benefits is to verify the built Docker images run correctly, especially when we introduce global changes,
-such as upgrading the base JDK image, or other pervasive changes.
+such as upgrading the base JDK image, the maven plugins, or other pervasive changes.
 
 == Test Strategy
 
-Each test uses a docker-compose file to configure a simple pipeline including the source, sink, or processor app under test.
-Usually, a single message is sufficient.
+See https://github.com/spring-cloud/stream-applications/tree/master/applications/stream-applications-core/common/stream-applications-test-support[] for a full description.
+
 
 The tests use following patterns:
 
-=== Source
-To test a source, we use a log sink and add a LogConsumer that returns a boolean value, eventually evaluating to `true`
-when an expected regex match is detected. Then we create an event to trigger the source.
+== Source
+To test a source, we may require some application specific setup or event to trigger the source.
+For example, the jdbc source needs some data in the database to which it is listening.
+Then use an `outputPayloadVerifier` or `outputMessageVerifier` to verify the output.
 
-=== Sink
-To test a sink, we use the http source and post a message using WebClient.
+== Sink
+To test a sink, we need to publish a message to its input. Simply use the provided KafkaTemplate or RabbitTemplate beans.
+Then we need to verify the result by checking the sink's external resource.
 
-=== Processor
-To test a processor, use an http source and a log sink.
+== Processor
+To test a processor we publish a message and  use an `outputPayloadVerifier` or `outputMessageVerifier` to verify the output.
 
-Typically, it is convenient to run the required external resource in a separate container, since it must be accessed by localhost(to provide data to a source or
-verify data created by a sink), and by the containerized applications.
+== Configuration
+See link:src/test/java/org/springframework/cloud/stream/apps/integration/test/common/Configuration.java[Configuration] for configuration
+options. These tests use Spring but not boot currently.
+The most important setting is the image versions to test.
+By default, we use `latest`.
+To override it, set the System property, e.g.,
 
-=== Organization and Conventions
-`processor`, `source`, and `sink` are leaf packages.
-The docker-compose YAML corresponding each test are test resources, similarly organized.
-So `.../source/JdbcSinkTests` corresponds to `source/jdbc-source-tests.yml`.
+./mvnw clean test -Dspring.cloud.stream.applications.version=3.0.0-M3
 
-=== Templating
-The docker-compose files are Mustache templates to allow configuration of runtime values, such as ports.
-The Docker tag is required configuration, so the templates must always be processed.
-The result is copied to a temporary file.
+
 
 
 
