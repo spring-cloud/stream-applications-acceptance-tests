@@ -91,7 +91,8 @@ public class KafkaS3SourceTests extends KafkaStreamApplicationIntegrationTestSup
 			.withEnv("CLOUD_AWS_STACK_AUTO", "false")
 			.withEnv("CLOUD_AWS_CREDENTIALS_ACCESS_KEY", "minio")
 			.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
-			.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1");
+			.withEnv("LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_INTEGRATION", "DEBUG")
+			.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1").log();
 
 	//
 	@Test
