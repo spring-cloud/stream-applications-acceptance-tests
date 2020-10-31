@@ -72,7 +72,7 @@ public class KafkaHttpRequestProcessorTests extends KafkaStreamApplicationIntegr
 		});
 		kafkaTemplate.send(processor.getInputDestination(), "ping");
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputMessage(message -> message.getPayload().equals("{\"response\":\"ping\"}")
+				.until(messageMatches(message -> message.getPayload().equals("{\"response\":\"ping\"}")
 						&& message.getHeaders().get(MessageHeaders.CONTENT_TYPE)
 								.equals(MediaType.APPLICATION_JSON_VALUE)));
 	}

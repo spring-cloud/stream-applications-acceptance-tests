@@ -36,7 +36,7 @@ public class KafkaTikTokTests extends KafkaStreamApplicationIntegrationTestSuppo
 	@Container
 	private static final StreamApps streamApp = kafkaStreamApps(KafkaTikTokTests.class.getSimpleName(), kafka)
 			.withSourceContainer(prepackagedKafkaContainerFor("time-source", VERSION))
-			.withSinkContainer(prepackagedKafkaContainerFor("log-sink", VERSION).withLogConsumer(logMatcher))
+			.withSinkContainer(prepackagedKafkaContainerFor("log-sink", VERSION).withLogConsumer(logMatcher).log())
 			.build();
 
 	@Test

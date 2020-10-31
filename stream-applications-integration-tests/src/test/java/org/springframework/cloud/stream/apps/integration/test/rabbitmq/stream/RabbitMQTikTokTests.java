@@ -36,8 +36,7 @@ public class RabbitMQTikTokTests extends RabbitMQStreamApplicationIntegrationTes
 	@Container
 	private static final StreamApps streamApp = rabbitMQStreamApps(RabbitMQTikTokTests.class.getSimpleName(), rabbitmq)
 			.withSourceContainer(prepackagedRabbitMQContainerFor("time-source", VERSION))
-			.withSinkContainer(prepackagedRabbitMQContainerFor("log-sink", VERSION)
-					.withLogConsumer(logMatcher))
+			.withSinkContainer(prepackagedRabbitMQContainerFor("log-sink", VERSION).withLogConsumer(logMatcher).log())
 			.build();
 
 	@Test

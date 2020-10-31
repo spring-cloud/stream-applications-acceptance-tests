@@ -44,6 +44,6 @@ public class KafkaTimeSourceTests extends KafkaStreamApplicationIntegrationTestS
 	@Test
 	void test() {
 		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
-		await().atMost(DEFAULT_DURATION).until(verifyOutputPayload((String s) -> pattern.matcher(s).matches()));
+		await().atMost(DEFAULT_DURATION).until(payloadMatches((String s) -> pattern.matcher(s).matches()));
 	}
 }

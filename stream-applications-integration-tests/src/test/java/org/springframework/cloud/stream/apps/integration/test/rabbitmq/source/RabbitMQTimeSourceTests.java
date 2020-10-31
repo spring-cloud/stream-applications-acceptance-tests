@@ -46,6 +46,7 @@ public class RabbitMQTimeSourceTests extends RabbitMQStreamApplicationIntegratio
 	@Test
 	void test() {
 		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
-		await().atMost(DEFAULT_DURATION).pollInterval(Duration.ofSeconds(1)).until(verifyOutputPayload((String s) -> pattern.matcher(s).matches()));
+		await().atMost(DEFAULT_DURATION).pollInterval(Duration.ofSeconds(1))
+				.until(payloadMatches((String s) -> pattern.matcher(s).matches()));
 	}
 }

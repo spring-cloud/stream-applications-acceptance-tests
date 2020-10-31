@@ -55,7 +55,7 @@ public class KafkaSftpSourceTests extends KafkaStreamApplicationIntegrationTestS
 		startContainer(Collections.singletonMap("FILE_CONSUMER_MODE", "ref"));
 
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputPayload((String s) -> s.equals("\"/tmp/sftp-supplier/data.txt\"")));
+				.until(payloadMatches((String s) -> s.equals("\"/tmp/sftp-supplier/data.txt\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {

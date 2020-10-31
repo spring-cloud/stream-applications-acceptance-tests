@@ -37,7 +37,7 @@ public class KafkaJdbcLogStreamTests extends KafkaStreamApplicationIntegrationTe
 	private static LogMatcher logMatcher = LogMatcher.contains("Bart Simpson");
 
 	@Container
-	public static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
+	private static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
 			.withUsername("test")
 			.withPassword("secret")
 			.withExposedPorts(3306)

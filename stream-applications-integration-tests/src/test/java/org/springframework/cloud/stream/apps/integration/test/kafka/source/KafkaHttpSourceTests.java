@@ -56,7 +56,7 @@ public class KafkaHttpSourceTests extends KafkaStreamApplicationIntegrationTestS
 
 	@AfterEach
 	void reset() {
-		testTopicListener.clearOutputVerifiers();
+		testTopicListener.clearMessageMatchers();
 	}
 
 	@Test
@@ -76,7 +76,7 @@ public class KafkaHttpSourceTests extends KafkaStreamApplicationIntegrationTestS
 		countDownLatch.await(30, TimeUnit.SECONDS);
 		assertThat(httpStatus.get().is2xxSuccessful()).isTrue();
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputPayload(s -> s.equals("Hello")));
+				.until(payloadMatches(s -> s.equals("Hello")));
 	}
 
 	@Test
@@ -95,7 +95,7 @@ public class KafkaHttpSourceTests extends KafkaStreamApplicationIntegrationTestS
 				});
 		countDownLatch.await(30, TimeUnit.SECONDS);
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputPayload(s -> s.equals("{\"Hello\":\"world\"}")));
+				.until(payloadMatches(s -> s.equals("{\"Hello\":\"world\"}")));
 	}
 
 }

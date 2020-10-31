@@ -34,7 +34,7 @@ import static org.springframework.cloud.stream.apps.integration.test.common.Conf
 public class KafkaJdbcSourceTests extends KafkaStreamApplicationIntegrationTestSupport {
 
 	@Container
-	public static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
+	private static MySQLContainer mySQL = new MySQLContainer<>(DockerImageName.parse("mysql:5.7"))
 			.withUsername("test")
 			.withPassword("secret")
 			.withExposedPorts(3306)
@@ -61,6 +61,6 @@ public class KafkaJdbcSourceTests extends KafkaStreamApplicationIntegrationTestS
 	@Test
 	void test() {
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputPayload((String s) -> s.contains("Bart Simpson")));
+				.until(payloadMatches((String s) -> s.contains("Bart Simpson")));
 	}
 }

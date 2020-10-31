@@ -76,7 +76,7 @@ public class KafkaGeodeSourceTests extends KafkaStreamApplicationIntegrationTest
 			.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
 			.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
 			.withEnv("GEODE_POOL_HOST_ADDRESSES", localHostAddress() + ":" + cacheServerPort)
-			.withLogConsumer(logMatcher);
+			.withLogConsumer(logMatcher).log();
 
 	@BeforeAll
 	static void init() {
@@ -101,7 +101,7 @@ public class KafkaGeodeSourceTests extends KafkaStreamApplicationIntegrationTest
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.matches());
 		clientRegion.put("hello", "world");
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputPayload((String s) -> s.contains("world")));
+				.until(payloadMatches((String s) -> s.contains("world")));
 	}
 
 	@AfterAll

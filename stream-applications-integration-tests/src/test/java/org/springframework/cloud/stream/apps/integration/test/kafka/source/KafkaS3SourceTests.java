@@ -103,7 +103,7 @@ public class KafkaS3SourceTests extends KafkaStreamApplicationIntegrationTestSup
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 
-		await().atMost(DEFAULT_DURATION).until(verifyOutputPayload((String s) -> s.contains("Bart Simpson")));
+		await().atMost(DEFAULT_DURATION).until(payloadMatches((String s) -> s.contains("Bart Simpson")));
 
 	}
 
@@ -119,7 +119,7 @@ public class KafkaS3SourceTests extends KafkaStreamApplicationIntegrationTestSup
 		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
-		await().atMost(DEFAULT_DURATION).until(verifyOutputPayload(s -> s.equals(
+		await().atMost(DEFAULT_DURATION).until(payloadMatches(s -> s.equals(
 				"{\"args\":[\"filename=/tmp/s3-supplier/test\"],\"deploymentProps\":{},\"name\":\"myTask\"}")));
 	}
 
@@ -135,7 +135,7 @@ public class KafkaS3SourceTests extends KafkaStreamApplicationIntegrationTestSup
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 		await().atMost(DEFAULT_DURATION)
-				.until(verifyOutputPayload((String s) -> s.contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
+				.until(payloadMatches((String s) -> s.contains("\"bucketName\":\"bucket\",\"key\":\"test\"")));
 	}
 
 	private void startContainer(Map<String, String> environment) {
@@ -150,6 +150,6 @@ public class KafkaS3SourceTests extends KafkaStreamApplicationIntegrationTestSup
 			s3Client.deleteBucket("bucket");
 		}
 		source.stop();
-		testTopicListener.clearOutputVerifiers();
+		testTopicListener.clearMessageMatchers();
 	}
 }
