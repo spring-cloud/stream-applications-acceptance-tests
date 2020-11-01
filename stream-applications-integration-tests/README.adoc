@@ -17,20 +17,19 @@ The tests use following patterns:
 == Source
 To test a source, we may require some application specific setup or event to trigger the source.
 For example, the jdbc source needs some data in the database to which it is listening.
-Then use an `outputPayloadVerifier` or `outputMessageVerifier` to verify the output.
+Then use an `OutputMatcher` to verify the output.
 
 == Sink
-To test a sink, we need to publish a message to its input. Simply use the provided KafkaTemplate or RabbitTemplate beans.
+To test a sink, we need to publish a message to its input. Simply use the provided TestTopicSender.
 Then we need to verify the result by checking the sink's external resource.
 
 == Processor
-To test a processor we publish a message and  use an `outputPayloadVerifier` or `outputMessageVerifier` to verify the output.
+To test a processor we publish a message and  use an `OutputMatcher`  to verify the output.
 
 == Configuration
 See link:src/test/java/org/springframework/cloud/stream/apps/integration/test/common/Configuration.java[Configuration] for configuration
 options. These tests use Spring but not boot currently.
 The most important setting is the image versions to test.
-By default, we use `latest`.
 To override it, set the System property, e.g.,
 
 ./mvnw clean test -Dspring.cloud.stream.applications.version=3.0.0-M3

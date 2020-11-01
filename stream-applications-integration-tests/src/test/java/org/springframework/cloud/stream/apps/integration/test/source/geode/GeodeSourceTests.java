@@ -30,7 +30,6 @@ import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
@@ -42,7 +41,6 @@ import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppContainer;
-import org.springframework.context.ConfigurableApplicationContext;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
@@ -62,9 +60,6 @@ public abstract class GeodeSourceTests {
 
 	@Autowired
 	private OutputMatcher outputMatcher;
-
-	@Autowired
-	private ConfigurableApplicationContext context;
 
 	@Container
 	private static final GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
@@ -107,32 +102,20 @@ public abstract class GeodeSourceTests {
 	@Test
 	void test() throws InterruptedException {
 		await().atMost(Duration.ofMinutes(2)).until(logMatcher.matches());
+		if (source instanceof RabbitMQStreamAppContainer) {
+			// TODO: Some race condition. Need to investigate
+			Thread.sleep(10000);
+		}
 		String random = UUID.randomUUID().toString();
-
 		clientRegion.put(random, random);
 
-		if (source instanceof RabbitMQStreamAppContainer) {
-			// Thread.sleep(30);
-		}
-		else {
-			return;
-		}
-
 		await().atMost(Duration.ofSeconds(30))
-				.until(outputMatcher.payloadMatches((String s) -> {
-					System.out.println("!!!!!!!!!!!!!Matching on " + s);
-					return s.contains(random);
-				}));
-	}
-
-	@AfterEach
-	void clear() {
+				.until(outputMatcher.payloadMatches((String s) -> s.contains(random)));
 	}
 
 	@AfterAll
 	static void cleanup() {
 		source.stop();
 		clientCache.close();
-		geode.stop();
 	}
 }

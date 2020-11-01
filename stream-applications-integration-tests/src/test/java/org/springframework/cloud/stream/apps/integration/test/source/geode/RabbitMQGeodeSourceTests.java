@@ -17,7 +17,6 @@
 package org.springframework.cloud.stream.apps.integration.test.source.geode;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
@@ -25,7 +24,6 @@ import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQSt
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @RabbitMQStreamAppTest
-@Disabled("Some race condition when package tests run together")
 class RabbitMQGeodeSourceTests extends GeodeSourceTests {
 
 	@BeforeAll
