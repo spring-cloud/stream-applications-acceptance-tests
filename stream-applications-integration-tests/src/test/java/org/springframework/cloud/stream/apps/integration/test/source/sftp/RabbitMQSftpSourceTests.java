@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.apps.integration.test.common;
+package org.springframework.cloud.stream.apps.integration.test.source.sftp;
 
-import java.time.Duration;
+import org.junit.jupiter.api.BeforeEach;
 
-public abstract class Configuration {
+import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
+import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
 
-	public static String VERSION;
+import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
-	public static final Duration DEFAULT_DURATION = Duration.ofMinutes(1);
+@RabbitMQStreamAppTest
+class RabbitMQSftpSourceTests extends SftpSourceTests {
 
-	private static final String SPRING_CLOUD_STREAM_APPLICATIONS_VERSION = "spring.cloud.stream.applications.version";
-
-	static {
-		VERSION = System.getProperty(SPRING_CLOUD_STREAM_APPLICATIONS_VERSION, "3.0.0-SNAPSHOT");
+	@BeforeEach
+	private void initKafka() {
+		configureSource(RabbitMQConfig
+				.prepackagedContainerFor("sftp-source", VERSION));
 	}
 
 }
