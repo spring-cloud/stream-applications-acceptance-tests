@@ -20,7 +20,9 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,10 +32,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 abstract class SftpSourceTests {
 
 	private StreamAppContainer source;
@@ -45,9 +49,11 @@ abstract class SftpSourceTests {
 			.withClasspathResourceMapping("sftp", "/home/user/remote", BindMode.READ_ONLY)
 			.withStartupTimeout(DEFAULT_DURATION);
 
-	protected void configureSource(StreamAppContainer baseContainer) {
+	@BeforeEach
+	void configureSource() {
 		await().atMost(DEFAULT_DURATION).until(() -> sftp.isRunning());
-		source = baseContainer.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
+		source = BaseContainerExtension.containerInstance()
+				.withEnv("SFTP_SUPPLIER_FACTORY_ALLOW_UNKNOWN_KEYS", "true")
 				.withEnv("SFTP_SUPPLIER_REMOTE_DIR", "/remote")
 				.withEnv("SFTP_SUPPLIER_FACTORY_USERNAME", "user")
 				.withEnv("SFTP_SUPPLIER_FACTORY_PASSWORD", "pass")
@@ -70,6 +76,7 @@ abstract class SftpSourceTests {
 	private void startContainer(Map<String, String> environment) {
 		source.withEnv(environment);
 		source.start();
+		environment.keySet().forEach(k -> source.getEnvMap().remove(k));
 	}
 
 	@AfterEach

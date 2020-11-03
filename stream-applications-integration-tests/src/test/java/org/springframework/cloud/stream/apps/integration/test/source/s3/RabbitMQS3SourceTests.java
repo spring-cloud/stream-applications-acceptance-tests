@@ -16,19 +16,16 @@
 
 package org.springframework.cloud.stream.apps.integration.test.source.s3;
 
-import org.junit.jupiter.api.BeforeEach;
-
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.RabbitMQStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
-import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @RabbitMQStreamAppTest
-class RabbitMQS3SourceTests extends S3SourceTests {
+public class RabbitMQS3SourceTests extends S3SourceTests {
 
-	@BeforeEach
-	void init() {
-		configureSource(RabbitMQConfig
-				.prepackagedContainerFor("s3-source", VERSION));
-	}
+	@BaseContainer
+	public static StreamAppContainer source = RabbitMQConfig.prepackagedContainerFor("s3-source", VERSION);
 }

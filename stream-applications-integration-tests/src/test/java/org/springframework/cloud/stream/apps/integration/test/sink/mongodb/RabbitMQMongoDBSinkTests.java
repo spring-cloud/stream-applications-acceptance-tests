@@ -16,20 +16,17 @@
 
 package org.springframework.cloud.stream.apps.integration.test.sink.mongodb;
 
-import org.junit.jupiter.api.BeforeAll;
-
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.RabbitMQStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
-import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @RabbitMQStreamAppTest
-class RabbitMQMongoDBSinkTests extends MongoDBSinkTests {
+public class RabbitMQMongoDBSinkTests extends MongoDBSinkTests {
 
-	@BeforeAll
-	static void init() {
-		configureSink(RabbitMQConfig
-				.prepackagedContainerFor("mongodb-sink", VERSION));
-	}
+	@BaseContainer
+	public static StreamAppContainer sink = RabbitMQConfig.prepackagedContainerFor("mongodb-sink", VERSION);
 
 }

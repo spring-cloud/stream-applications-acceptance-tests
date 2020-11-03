@@ -22,7 +22,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.wait.strategy.Wait;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -38,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 public abstract class HttpSourceTests {
 
 	private static int serverPort = StreamAppContainerTestUtils.findAvailablePort();
@@ -46,11 +50,13 @@ public abstract class HttpSourceTests {
 
 	private static StreamAppContainer source;
 
-	protected static StreamAppContainer configureSource(StreamAppContainer baseContainer) {
-		source = baseContainer.withEnv("SERVER_PORT", String.valueOf(serverPort))
+	@BeforeAll
+	static void configureSource() {
+		source = BaseContainerExtension.containerInstance()
+				.withEnv("SERVER_PORT", String.valueOf(serverPort))
 				.withExposedPorts(serverPort)
 				.waitingFor(Wait.forListeningPort().withStartupTimeout(DEFAULT_DURATION));
-		return source;
+		source.start();
 	}
 
 	@Autowired

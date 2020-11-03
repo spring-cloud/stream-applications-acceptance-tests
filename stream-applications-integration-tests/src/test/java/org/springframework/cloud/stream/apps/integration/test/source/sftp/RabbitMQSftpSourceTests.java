@@ -16,20 +16,17 @@
 
 package org.springframework.cloud.stream.apps.integration.test.source.sftp;
 
-import org.junit.jupiter.api.BeforeEach;
-
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.RabbitMQStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
-import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @RabbitMQStreamAppTest
-class RabbitMQSftpSourceTests extends SftpSourceTests {
+public class RabbitMQSftpSourceTests extends SftpSourceTests {
 
-	@BeforeEach
-	private void initKafka() {
-		configureSource(RabbitMQConfig
-				.prepackagedContainerFor("sftp-source", VERSION));
-	}
+	@BaseContainer
+	public static StreamAppContainer source = RabbitMQConfig.prepackagedContainerFor("sftp-source", VERSION);
 
 }

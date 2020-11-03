@@ -18,16 +18,19 @@ package org.springframework.cloud.stream.apps.integration.test.sink.jdbc;
 
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.TestTopicSender;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -36,13 +39,14 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 public abstract class JdbcSinkTests {
 
 	private static JdbcTemplate jdbcTemplate;
 
 	private static StreamAppContainer sink;
 
-	private static LogMatcher logMatcher = LogMatcher.contains("Started JdbcSink");
+	//private static LogMatcher startupLogEntry = LogMatcher.contains("Started JdbcSink");
 
 	@Autowired
 	private TestTopicSender testTopicSender;
@@ -58,21 +62,19 @@ public abstract class JdbcSinkTests {
 			.withLogConsumer(appLog("mysql-for-sink"))
 			.withCommand("--init-file", "/init.sql");
 
-	protected static void configureSink(StreamAppContainer baseContainer) {
-		sink = baseContainer
+	@BeforeAll
+	static void init() {
+		// BaseContainerExtension.logMatcher().map(lm -> startupLogEntry = lm);
+		sink = BaseContainerExtension.containerInstance()
 				.dependsOn(mySQL)
 				.withEnv("JDBC_CONSUMER_COLUMNS", "name,city:address.city,street:address.street")
 				.withEnv("JDBC_CONSUMER_TABLE_NAME", "People")
 				.withEnv("SPRING_DATASOURCE_USERNAME", "test")
 				.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
 				.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
-				// .withEnv("LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_INTEGRATION", "DEBUG")
-				// .withEnv("LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JDBC", "DEBUG")
-				// .withEnv("LOGGING_LEVEL_ORG_MARIADB_JDBC", "DEBUG")
-				// .log()
 				.withEnv("SPRING_DATASOURCE_URL",
 						"jdbc:mariadb://mysql-for-sink:3306/test")
-				.withLogConsumer(logMatcher);
+				.waitingFor(Wait.forLogMessage(".*Started JdbcSink.*", 1));
 		startSink();
 	}
 
@@ -89,7 +91,11 @@ public abstract class JdbcSinkTests {
 				.until(() -> jdbcTemplate.queryForObject("SELECT COUNT(*) from People", Integer.class)
 						.intValue() == 0);
 		sink.start();
-		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
+		// await().atMost(DEFAULT_DURATION).conditionEvaluationListener(evaluatedCondition -> {
+		// System.out.println("App started ....................................... in "
+		// + evaluatedCondition.getElapsedTimeInMS());
+		// }).until(startupLogEntry.matches());
+
 	}
 
 	@Test

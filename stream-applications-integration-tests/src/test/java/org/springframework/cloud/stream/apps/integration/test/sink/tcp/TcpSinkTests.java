@@ -28,15 +28,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
 import org.springframework.cloud.stream.app.test.integration.TestTopicSender;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 abstract class TcpSinkTests {
 
 	private static int tcpPort;
@@ -50,15 +54,18 @@ abstract class TcpSinkTests {
 	@Autowired
 	private TestTopicSender testTopicSender;
 
-	protected static StreamAppContainer configureSink(StreamAppContainer baseContainer) {
+	@BeforeAll
+	static void configureSink() {
 		tcpPort = StreamAppContainerTestUtils.findAvailablePort();
-		sink = baseContainer.withEnv("TCP_CONSUMER_HOST", StreamAppContainerTestUtils.localHostAddress())
+		startTcpServer();
+		sink = BaseContainerExtension.containerInstance()
+				.withEnv("TCP_CONSUMER_HOST", StreamAppContainerTestUtils.localHostAddress())
 				.withEnv("TCP_PORT", String.valueOf(tcpPort))
-				.withEnv("TCP_CONSUMER_ENCODER", "CRLF");
-		return sink;
+				.withEnv("TCP_CONSUMER_ENCODER", "CRLF")
+				.waitingFor(Wait.forLogMessage(".*Started TcpSink.*", 1));
+		sink.start();
 	}
 
-	@BeforeAll
 	static void startTcpServer() {
 		socketReady.set(false);
 		new Thread(() -> {
@@ -85,6 +92,7 @@ abstract class TcpSinkTests {
 
 	@AfterAll
 	static void cleanUp() throws IOException {
+		sink.stop();
 		socket.close();
 	}
 }

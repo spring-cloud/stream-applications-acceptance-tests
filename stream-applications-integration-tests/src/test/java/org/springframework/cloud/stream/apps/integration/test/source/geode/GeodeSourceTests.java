@@ -30,22 +30,25 @@ import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.fn.test.support.geode.GeodeContainer;
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
-import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
-public abstract class GeodeSourceTests {
+@ExtendWith(BaseContainerExtension.class)
+abstract class GeodeSourceTests {
 	private static int locatorPort = StreamAppContainerTestUtils.findAvailablePort();
 
 	private static int cacheServerPort = StreamAppContainerTestUtils.findAvailablePort();
@@ -53,8 +56,6 @@ public abstract class GeodeSourceTests {
 	private static Region<Object, Object> clientRegion;
 
 	private static ClientCache clientCache;
-
-	protected static LogMatcher logMatcher = LogMatcher.contains("Started GeodeSource");
 
 	protected static StreamAppContainer source;
 
@@ -77,7 +78,8 @@ public abstract class GeodeSourceTests {
 					.withCommand("tail", "-f", "/dev/null")
 					.withStartupTimeout(DEFAULT_DURATION.multipliedBy(2));
 
-	protected static void initializeGeodeCacheThenStartSource() {
+	@BeforeAll
+	static void initializeGeodeCacheThenStartSource() {
 		// Not using locator is faster.
 		System.out.println(geode.execGfsh(
 				"start server --name=Server1 " + "--hostname-for-clients=geode" + " --server-port="
@@ -92,23 +94,18 @@ public abstract class GeodeSourceTests {
 				.createClientRegionFactory(ClientRegionShortcut.PROXY)
 				.create("myRegion");
 
-		source.withEnv("GEODE_POOL_CONNECT_TYPE", "server")
+		source = BaseContainerExtension.containerInstance().withEnv("GEODE_POOL_CONNECT_TYPE", "server")
 				.withEnv("GEODE_REGION_REGION_NAME", "myRegion")
 				.withEnv("GEODE_POOL_HOST_ADDRESSES",
 						StreamAppContainerTestUtils.localHostAddress() + ":" + cacheServerPort)
-				.withLogConsumer(logMatcher).log().start();
+				.waitingFor(Wait.forLogMessage(".*Started GeodeSource.*", 1));
+		source.start();
 	}
 
 	@Test
 	void test() throws InterruptedException {
-		await().atMost(Duration.ofMinutes(2)).until(logMatcher.matches());
-		if (source instanceof RabbitMQStreamAppContainer) {
-			// TODO: Some race condition. Need to investigate
-			Thread.sleep(10000);
-		}
 		String random = UUID.randomUUID().toString();
 		clientRegion.put(random, random);
-
 		await().atMost(Duration.ofSeconds(30))
 				.until(outputMatcher.payloadMatches((String s) -> s.contains(random)));
 	}

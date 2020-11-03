@@ -16,21 +16,17 @@
 
 package org.springframework.cloud.stream.apps.integration.test.source.geode;
 
-import org.junit.jupiter.api.BeforeAll;
-
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
-import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @KafkaStreamAppTest
-class KafkaGeodeSourceTests extends GeodeSourceTests {
+public class KafkaGeodeSourceTests extends GeodeSourceTests {
 
-	@BeforeAll
-	static void init() {
-		source = KafkaConfig
-				.prepackagedContainerFor("geode-source", VERSION);
-		initializeGeodeCacheThenStartSource();
-	}
+	@BaseContainer
+	public static StreamAppContainer source = KafkaConfig.prepackagedContainerFor("geode-source", VERSION);
 
 }

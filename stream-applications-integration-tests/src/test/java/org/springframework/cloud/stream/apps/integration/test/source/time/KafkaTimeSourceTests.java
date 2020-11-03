@@ -19,8 +19,9 @@ package org.springframework.cloud.stream.apps.integration.test.source.time;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
-import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppTest;
+
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
@@ -28,8 +29,6 @@ import static org.springframework.cloud.stream.apps.integration.test.common.Conf
 class KafkaTimeSourceTests extends TimeSourceTests {
 
 	@Container
-	static StreamAppContainer source = KafkaConfig
-			.prepackagedContainerFor("time-source", VERSION)
-			.withLogConsumer(logMatcher);
+	static StreamAppContainer source = KafkaConfig.prepackagedContainerFor("time-source", VERSION);
 
 }

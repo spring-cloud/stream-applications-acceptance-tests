@@ -17,7 +17,9 @@
 package org.springframework.cloud.stream.apps.integration.test.source.jdbc;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -26,12 +28,14 @@ import org.testcontainers.utility.DockerImageName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 abstract class JdbcSourceTests {
 
 	@Autowired
@@ -50,8 +54,9 @@ abstract class JdbcSourceTests {
 			.withClasspathResourceMapping("init.sql", "/init.sql", BindMode.READ_ONLY)
 			.withCommand("--init-file", "/init.sql");
 
-	protected static void configureSource(StreamAppContainer baseContainer) {
-		source = baseContainer
+	@BeforeAll
+	protected static void configureSource() {
+		source = BaseContainerExtension.containerInstance()
 				.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
 				.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
 				.withEnv("SPRING_DATASOURCE_USERNAME", "test")

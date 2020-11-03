@@ -21,8 +21,8 @@ import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamApps;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
-import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppTest;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;

@@ -16,19 +16,16 @@
 
 package org.springframework.cloud.stream.apps.integration.test.source.jdbc;
 
-import org.junit.jupiter.api.BeforeAll;
-
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.RabbitMQStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
-import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @RabbitMQStreamAppTest
-class RabbitMQJdbcSourceTests extends JdbcSourceTests {
+public class RabbitMQJdbcSourceTests extends JdbcSourceTests {
 
-	@BeforeAll
-	static void init() {
-		configureSource(RabbitMQConfig
-				.prepackagedContainerFor("jdbc-source", VERSION));
-	}
+	@BaseContainer
+	public static StreamAppContainer source = RabbitMQConfig.prepackagedContainerFor("jdbc-source", VERSION);
 }

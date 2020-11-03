@@ -21,14 +21,17 @@ import java.util.List;
 
 import org.bson.Document;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
 import org.springframework.cloud.stream.app.test.integration.TestTopicSender;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -37,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 abstract class MongoDBSinkTests {
 
 	private static MongoTemplate mongoTemplate;
@@ -44,7 +48,7 @@ abstract class MongoDBSinkTests {
 	@Autowired
 	private TestTopicSender testTopicSender;
 
-	private static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"))
+	private static final MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:4.0.10")
 			.withExposedPorts(27017)
 			.withStartupTimeout(Duration.ofMinutes(2));
 
@@ -55,11 +59,14 @@ abstract class MongoDBSinkTests {
 
 	private static StreamAppContainer sink;
 
-	protected static void configureSink(StreamAppContainer baseContainer) {
+	@BeforeAll
+	protected static void configureSink() {
 		mongoDBContainer.start();
-		sink = baseContainer
+		sink = BaseContainerExtension.containerInstance()
 				.withEnv("MONGODB_CONSUMER_COLLECTION", "test")
-				.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString());
+				.withEnv("SPRING_DATA_MONGODB_URL", mongoConnectionString())
+				.waitingFor(Wait.forLogMessage(".*Started MongodbSink.*", 1));
+
 		sink.start();
 		buildMongoTemplate();
 	}

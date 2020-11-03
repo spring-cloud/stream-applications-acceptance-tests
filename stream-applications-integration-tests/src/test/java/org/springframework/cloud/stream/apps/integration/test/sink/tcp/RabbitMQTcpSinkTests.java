@@ -16,17 +16,16 @@
 
 package org.springframework.cloud.stream.apps.integration.test.sink.tcp;
 
-import org.testcontainers.junit.jupiter.Container;
-
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.RabbitMQStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQConfig;
-import org.springframework.cloud.stream.app.test.integration.rabbitmq.RabbitMQStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @RabbitMQStreamAppTest
 public class RabbitMQTcpSinkTests extends TcpSinkTests {
 
-	@Container
-	static StreamAppContainer container = configureSink(RabbitMQConfig.prepackagedContainerFor("tcp-sink", VERSION));
+	@BaseContainer
+	public static StreamAppContainer sink = RabbitMQConfig.prepackagedContainerFor("tcp-sink", VERSION);
 }

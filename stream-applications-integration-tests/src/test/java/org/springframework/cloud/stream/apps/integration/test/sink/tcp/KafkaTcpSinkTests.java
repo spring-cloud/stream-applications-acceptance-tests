@@ -16,18 +16,17 @@
 
 package org.springframework.cloud.stream.apps.integration.test.sink.tcp;
 
-import org.testcontainers.junit.jupiter.Container;
-
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
-import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppTest;
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @KafkaStreamAppTest
 public class KafkaTcpSinkTests extends TcpSinkTests {
 
-	@Container
-	static StreamAppContainer container = configureSink(KafkaConfig.prepackagedContainerFor("tcp-sink", VERSION));
+	@BaseContainer
+	public static StreamAppContainer sink = KafkaConfig.prepackagedContainerFor("tcp-sink", VERSION);
 
 }

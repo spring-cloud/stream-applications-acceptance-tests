@@ -31,7 +31,9 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
@@ -40,7 +42,7 @@ import org.testcontainers.utility.DockerImageName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.app.test.integration.TestTopicListener;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainerExtension;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
@@ -49,14 +51,12 @@ import static org.springframework.cloud.stream.app.test.integration.StreamAppCon
 import static org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils.resourceAsFile;
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.DEFAULT_DURATION;
 
+@ExtendWith(BaseContainerExtension.class)
 abstract class S3SourceTests {
 
 	private static AmazonS3 s3Client;
 
 	private StreamAppContainer source;
-
-	@Autowired
-	private TestTopicListener testTopicListener;
 
 	@Autowired
 	private OutputMatcher outputMatcher;
@@ -90,9 +90,9 @@ abstract class S3SourceTests {
 
 	}
 
-	protected void configureSource(StreamAppContainer baseContainer) {
-		source = baseContainer
-				.withEnv("S3_SUPPLIER_REMOTE_DIR", "bucket")
+	@BeforeEach
+	void configureSource() {
+		source = BaseContainerExtension.containerInstance()
 				.withEnv("S3_COMMON_ENDPOINT_URL", "http://" + localHostAddress() + ":" + minio.getMappedPort(9000))
 				.withEnv("S3_COMMON_PATH_STYLE_ACCESS", "true")
 				.withEnv("CLOUD_AWS_STACK_AUTO", "false")
@@ -100,13 +100,13 @@ abstract class S3SourceTests {
 				.withEnv("CLOUD_AWS_CREDENTIALS_SECRET_KEY", "minio123")
 				.withEnv("LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_INTEGRATION", "DEBUG")
 				.withEnv("CLOUD_AWS_REGION_STATIC", "us-east-1").log();
+		s3Client.createBucket("bucket");
 	}
 
 	@Test
 	void testLines() {
 		startContainer(
 				fluentMap().withEntry("FILE_CONSUMER_MODE", "lines"));
-		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 
@@ -123,7 +123,6 @@ abstract class S3SourceTests {
 				.withEntry("TASK_LAUNCH_REQUEST_TASK_NAME", "myTask")
 				.withEntry("FILE_CONSUMER_MODE", "ref"));
 
-		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 		await().atMost(DEFAULT_DURATION).until(outputMatcher.payloadMatches(s -> s.equals(
@@ -132,13 +131,11 @@ abstract class S3SourceTests {
 
 	@Test
 	void testListOnly() {
-
 		startContainer(
 				fluentMap()
 						.withEntry("FILE_CONSUMER_MODE", "ref")
 						.withEntry("S3_SUPPLIER_LIST_ONLY", "true"));
 
-		s3Client.createBucket("bucket");
 		s3Client.putObject(new PutObjectRequest("bucket", "test",
 				resourceAsFile("minio/data")));
 		await().atMost(DEFAULT_DURATION)
@@ -148,7 +145,8 @@ abstract class S3SourceTests {
 
 	private void startContainer(Map<String, String> environment) {
 		source.withEnv(environment);
-		source.start();
+		source.waitingFor(Wait.forLogMessage(".*Started S3Source.*", 1)).start();
+		environment.keySet().forEach(k -> source.getEnvMap().remove(k));
 	}
 
 	@AfterEach
@@ -158,7 +156,7 @@ abstract class S3SourceTests {
 			s3Client.deleteBucket("bucket");
 		}
 		source.stop();
-		testTopicListener.clearMessageMatchers();
+		outputMatcher.clearMessageMatchers();
 	}
 
 }

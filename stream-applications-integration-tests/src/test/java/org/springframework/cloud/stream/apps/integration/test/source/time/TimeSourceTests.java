@@ -18,10 +18,10 @@ package org.springframework.cloud.stream.apps.integration.test.source.time;
 
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.stream.app.test.integration.LogMatcher;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 
 import static org.awaitility.Awaitility.await;
@@ -32,15 +32,17 @@ abstract class TimeSourceTests {
 	// "MM/dd/yy HH:mm:ss";
 	private final static Pattern pattern = Pattern.compile(".*\\d{2}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}");
 
-	static LogMatcher logMatcher = LogMatcher.contains("Started TimeSource");
-
 	@Autowired
 	private OutputMatcher outputMatcher;
 
 	@Test
 	void test() {
-		await().atMost(DEFAULT_DURATION).until(logMatcher.matches());
 		await().atMost(DEFAULT_DURATION)
 				.until(outputMatcher.payloadMatches((String s) -> pattern.matcher(s).matches()));
+	}
+
+	@AfterEach
+	void cleanUp() {
+		outputMatcher.clearMessageMatchers();
 	}
 }
