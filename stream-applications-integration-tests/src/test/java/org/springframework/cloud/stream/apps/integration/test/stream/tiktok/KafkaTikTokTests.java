@@ -20,9 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
 import org.springframework.cloud.stream.app.test.integration.StreamApps;
 import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppContainer;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamApps.kafkaStreamApps;
@@ -39,10 +41,14 @@ public class KafkaTikTokTests {
 	private static final StreamApps streamApp = kafkaStreamApps(KafkaTikTokTests.class.getSimpleName(),
 			KafkaConfig.kafka)
 					.withSourceContainer(
-							KafkaConfig.prepackagedContainerFor("time-source", VERSION))
+							new KafkaStreamAppContainer(StreamAppContainerTestUtils.imageName(
+									"time-source-kafka",
+									VERSION)))
 					.withSinkContainer(
-							KafkaConfig.prepackagedContainerFor("log-sink", VERSION).withLogConsumer(logMatcher)
-									.log())
+							new KafkaStreamAppContainer(StreamAppContainerTestUtils.imageName(
+									"log-sink-kafka",
+									VERSION)).withLogConsumer(logMatcher)
+											.log())
 					.build();
 
 	@Test

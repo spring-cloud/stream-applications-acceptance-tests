@@ -23,9 +23,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import org.springframework.cloud.stream.app.test.integration.LogMatcher;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
 import org.springframework.cloud.stream.app.test.integration.StreamApps;
 import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
 import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppContainer;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.cloud.stream.app.test.integration.AppLog.appLog;
@@ -53,16 +55,20 @@ public class KafkaJdbcLogStreamTests {
 	private static final StreamApps streamApp = kafkaStreamApps(KafkaJdbcLogStreamTests.class.getSimpleName(),
 			KafkaConfig.kafka)
 					.withSourceContainer(
-							KafkaConfig.prepackagedContainerFor("jdbc-source", VERSION)
-									.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
-									.withEnv("JDBC_SUPPLIER_UPDATE", "UPDATE People SET deleted='Y' WHERE id=:id")
-									.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
-									.withEnv("SPRING_DATASOURCE_USERNAME", "test")
-									.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
-									.withEnv("SPRING_DATASOURCE_URL",
-											"jdbc:mariadb://mysql-for-stream:3306/test"))
+							new KafkaStreamAppContainer(StreamAppContainerTestUtils.imageName(
+									"jdbc-source-kafka",
+									VERSION))
+											.withEnv("JDBC_SUPPLIER_QUERY", "SELECT * FROM People WHERE deleted='N'")
+											.withEnv("JDBC_SUPPLIER_UPDATE",
+													"UPDATE People SET deleted='Y' WHERE id=:id")
+											.withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
+											.withEnv("SPRING_DATASOURCE_USERNAME", "test")
+											.withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.mariadb.jdbc.Driver")
+											.withEnv("SPRING_DATASOURCE_URL",
+													"jdbc:mariadb://mysql-for-stream:3306/test"))
 					.withSinkContainer(
-							KafkaConfig.prepackagedContainerFor("log-sink", VERSION).withLogConsumer(logMatcher))
+							new KafkaStreamAppContainer(StreamAppContainerTestUtils.imageName(
+									"log-sink-kafka", VERSION)).withLogConsumer(logMatcher))
 					.build();
 
 	@Test

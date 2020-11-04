@@ -19,15 +19,18 @@ package org.springframework.cloud.stream.apps.integration.test.processor.httpreq
 import org.testcontainers.junit.jupiter.Container;
 
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
+import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
 import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
-import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
+import org.springframework.cloud.stream.app.test.integration.kafka.KafkaStreamAppContainer;
+
 
 import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
 
 @KafkaStreamAppTest
 class KafkaHttpRequestProcessorTests extends HttpRequestProcessorTests {
 	@Container
-	private static StreamAppContainer container = configureProcessor(KafkaConfig
-			.prepackagedContainerFor("http-request-processor", VERSION));
+	private static StreamAppContainer container = configureProcessor(
+			new KafkaStreamAppContainer(StreamAppContainerTestUtils.imageName(
+					"http-request-processor-kafka", VERSION)));
 
 }

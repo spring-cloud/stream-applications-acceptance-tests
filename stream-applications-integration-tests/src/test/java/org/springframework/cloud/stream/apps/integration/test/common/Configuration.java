@@ -17,6 +17,7 @@
 package org.springframework.cloud.stream.apps.integration.test.common;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 
 public abstract class Configuration {
 
@@ -28,6 +29,14 @@ public abstract class Configuration {
 
 	static {
 		VERSION = System.getProperty(SPRING_CLOUD_STREAM_APPLICATIONS_VERSION, "3.0.0-SNAPSHOT");
+	}
+
+	public static class VersionSupplier implements Supplier<String> {
+
+		@Override
+		public String get() {
+			return VERSION;
+		}
 	}
 
 }

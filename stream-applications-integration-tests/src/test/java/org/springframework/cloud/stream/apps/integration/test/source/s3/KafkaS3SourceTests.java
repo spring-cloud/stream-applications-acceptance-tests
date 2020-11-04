@@ -16,16 +16,11 @@
 
 package org.springframework.cloud.stream.apps.integration.test.source.s3;
 
-import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
-import org.springframework.cloud.stream.app.test.integration.junit.jupiter.BaseContainer;
+import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaBaseContainer;
 import org.springframework.cloud.stream.app.test.integration.junit.jupiter.KafkaStreamAppTest;
-import org.springframework.cloud.stream.app.test.integration.kafka.KafkaConfig;
-
-import static org.springframework.cloud.stream.apps.integration.test.common.Configuration.VERSION;
+import org.springframework.cloud.stream.apps.integration.test.common.Configuration;
 
 @KafkaStreamAppTest
+@KafkaBaseContainer(name = "s3-source-kafka", versionSupplier = Configuration.VersionSupplier.class)
 public class KafkaS3SourceTests extends S3SourceTests {
-
-	@BaseContainer
-	public static StreamAppContainer source = KafkaConfig.prepackagedContainerFor("s3-source", VERSION);
 }
