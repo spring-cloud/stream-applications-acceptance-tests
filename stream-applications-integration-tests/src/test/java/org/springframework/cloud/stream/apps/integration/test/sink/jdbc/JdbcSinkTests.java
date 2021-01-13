@@ -46,8 +46,6 @@ public abstract class JdbcSinkTests {
 
 	private static StreamAppContainer sink;
 
-	//private static LogMatcher startupLogEntry = LogMatcher.contains("Started JdbcSink");
-
 	@Autowired
 	private TestTopicSender testTopicSender;
 
@@ -64,7 +62,6 @@ public abstract class JdbcSinkTests {
 
 	@BeforeAll
 	static void init() {
-		// BaseContainerExtension.logMatcher().map(lm -> startupLogEntry = lm);
 		sink = BaseContainerExtension.containerInstance()
 				.dependsOn(mySQL)
 				.withEnv("JDBC_CONSUMER_COLUMNS", "name,city:address.city,street:address.street")
@@ -91,11 +88,6 @@ public abstract class JdbcSinkTests {
 				.until(() -> jdbcTemplate.queryForObject("SELECT COUNT(*) from People", Integer.class)
 						.intValue() == 0);
 		sink.start();
-		// await().atMost(DEFAULT_DURATION).conditionEvaluationListener(evaluatedCondition -> {
-		// System.out.println("App started ....................................... in "
-		// + evaluatedCondition.getElapsedTimeInMS());
-		// }).until(startupLogEntry.matches());
-
 	}
 
 	@Test

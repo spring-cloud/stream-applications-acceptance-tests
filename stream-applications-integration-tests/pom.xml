@@ -19,7 +19,7 @@
 		<java-functions.version>1.0.0-M4</java-functions.version>
 		<stream-applications.version>3.0.0-M4</stream-applications.version>
 		<mariadb-client.version>2.6.2</mariadb-client.version>
-		<test-containers.version>1.15.0</test-containers.version>
+		<test-containers.version>1.15.1</test-containers.version>
 		<maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
 		<disable.checks>false</disable.checks>
 		<maven-checkstyle-plugin.failsOnError>true</maven-checkstyle-plugin.failsOnError>
