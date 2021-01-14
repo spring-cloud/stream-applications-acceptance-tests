@@ -29,6 +29,8 @@ spec:
             value: kafka-zk:2181
           - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
             value: foo
+          - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
+            value: "1"
           - name: LOGGING_FILE_NAME
             value: time-source.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE

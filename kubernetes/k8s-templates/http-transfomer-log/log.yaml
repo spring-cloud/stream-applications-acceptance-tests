@@ -31,6 +31,8 @@ spec:
             value: transformer-out
           - name: LOG_EXPRESSION
             value: "'From Transformer: '.concat(payload)"
+          - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
+            value: "1"
           - name: LOGGING_FILE_NAME
             value: log-sink.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
