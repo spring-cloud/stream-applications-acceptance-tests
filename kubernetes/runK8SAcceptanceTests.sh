@@ -61,6 +61,26 @@ function prepare_http_transform_log_with_kafka_binder() {
     curl -X POST -H "Content-Type: text/plain" --data "foobar" $HTTP_SOURCE_SERVER_URI
 }
 
+function prepare_http_splitter_log_with_kafka_binder() {
+
+    kubectl create -f k8s-templates/http-splitter-log/http.yaml
+    kubectl create -f k8s-templates/http-splitter-log/http-svc.yaml
+    kubectl create -f k8s-templates/http-splitter-log/splitter-processor-kafka.yaml
+    kubectl create -f k8s-templates/http-splitter-log/splitter-processor-kafka-svc-lb.yaml
+    kubectl create -f k8s-templates/http-splitter-log/log.yaml
+    kubectl create -f k8s-templates/http-splitter-log/log-svc-lb.yaml
+
+    HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
+    SPLITTER_PROCESSOR_SERVER_URI=http://$(kubectl get service splitter-processor-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${SPLITTER_PROCESSOR_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
+
+#    curl -X POST -H "Content-Type: text/plain" --data "foobar" $HTTP_SOURCE_SERVER_URI
+}
+
 function delete_acceptance_test_components() {
 
     kubectl delete pod,deployment,rc,service -l type="stream-ats"
@@ -125,13 +145,35 @@ delete_acceptance_test_components
 
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
-    echo "Early exit due to test failure in ticktock tests"
+    echo "Early exit due to test failure in http/transform/log tests"
     duration=$SECONDS
 
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
     delete_acceptance_test_infra
     exit $BUILD_RETURN_VALUE
 fi
+
+prepare_http_splitter_log_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dsplitter.processor.route=$SPLITTER_PROCESSOR_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in http/splitter/log tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+    delete_acceptance_test_infra
+    exit $BUILD_RETURN_VALUE
+fi
+
 
 delete_acceptance_test_infra
 
