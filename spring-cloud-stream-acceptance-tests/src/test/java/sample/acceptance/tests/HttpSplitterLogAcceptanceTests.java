@@ -51,10 +51,14 @@ public class HttpSplitterLogAcceptanceTests extends AbstractAcceptanceTests {
 
 		RestTemplate restTemplate = new RestTemplate();
 
-		restTemplate.postForObject(
-				httpSourceUrl,
-				"how much wood would a woodchuck chuck if that woodchuck could chuck wood", String.class);
-
+		try {
+			restTemplate.postForObject(
+					httpSourceUrl,
+					"how much wood would a woodchuck chuck if that woodchuck could chuck wood", String.class);
+		}
+		catch (Exception e) {
+			//pass through
+		}
 		verifyLogs(logSinkUrl, ": how");
 		verifyLogs(logSinkUrl, ": much");
 		verifyLogs(logSinkUrl, ": wood");
