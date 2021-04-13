@@ -33,7 +33,6 @@ public class HttpSplitterLogAcceptanceTests extends AbstractAcceptanceTests {
 		String splitterProcessorUrl = System.getProperty("splitter.processor.route");
 		String logSinkUrl = System.getProperty("log.sink.route");
 
-
 		boolean foundLogs = waitForLogEntry("HTTP Source", httpSourceUrl, "Started HttpSource");
 		if(!foundLogs) {
 			fail("Did not find the http source started logging message.");

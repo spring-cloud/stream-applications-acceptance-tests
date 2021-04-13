@@ -51,9 +51,14 @@ public class HttpTransformLogAcceptanceTests extends AbstractAcceptanceTests {
 
 		RestTemplate restTemplate = new RestTemplate();
 
-		restTemplate.postForObject(
-				httpSourceUrl,
-				"foobar", String.class);
+		try {
+			restTemplate.postForObject(
+					httpSourceUrl,
+					"foobar", String.class);
+		}
+		catch (Exception e) {
+			//pass through...
+		}
 
 		verifyLogs(logSinkUrl, ": FOOBAR");
 	}
