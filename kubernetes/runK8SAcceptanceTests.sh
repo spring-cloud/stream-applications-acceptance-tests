@@ -28,11 +28,11 @@ function wait_for_200 {
 }
 
 function prepare_ticktock_latest_with_kafka_binder() {
-    kubectl create -f k8s-templates/time.yaml
-    kubectl create -f k8s-templates/time-svc-lb.yaml
+    kubectl create -f k8s-templates/ticktock/time.yaml
+    kubectl create -f k8s-templates/ticktock/time-svc-lb.yaml
 
-    kubectl create -f k8s-templates/log.yaml
-    kubectl create -f k8s-templates/log-svc-lb.yaml
+    kubectl create -f k8s-templates/ticktock/log.yaml
+    kubectl create -f k8s-templates/ticktock/log-svc-lb.yaml
 
     TIME_SOURCE_SERVER_URI=http://$(kubectl get service time | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
@@ -111,27 +111,27 @@ kubectl create -f k8s-templates/kafka-zk-svc.yaml
 kubectl create -f k8s-templates/kafka-deployment.yaml
 kubectl create -f k8s-templates/kafka-svc.yaml
 
-#prepare_ticktock_latest_with_kafka_binder
-#
-#pushd ../spring-cloud-stream-acceptance-tests
-#
-#../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$TIME_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
-#BUILD_RETURN_VALUE=$?
-#
-#popd
-#
-#delete_acceptance_test_components
-#
-#if [ "$BUILD_RETURN_VALUE" != 0 ]
-#then
-#    echo "Early exit due to test failure in ticktock tests"
-#    duration=$SECONDS
-#
-#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-#    delete_acceptance_test_infra
-#    exit $BUILD_RETURN_VALUE
-#fi
-#
+prepare_ticktock_latest_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$TIME_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in ticktock tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+    delete_acceptance_test_infra
+    exit $BUILD_RETURN_VALUE
+fi
+
 prepare_http_transform_log_with_kafka_binder
 
 pushd ../spring-cloud-stream-acceptance-tests
