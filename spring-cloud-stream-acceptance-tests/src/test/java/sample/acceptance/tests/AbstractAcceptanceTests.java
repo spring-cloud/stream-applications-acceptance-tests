@@ -61,7 +61,7 @@ abstract class AbstractAcceptanceTests {
 
 	private boolean waitForLogEntryInResource(boolean noBoot2, String app, String route, String... entries) {
 		logger.info("Looking for '" + StringUtils.arrayToCommaDelimitedString(entries) + "' in logfile for " + app + " - " + route);
-		long timeout = System.currentTimeMillis() + (30 * 1000);
+		long timeout = System.currentTimeMillis() + (60 * 1000);
 		boolean exists = false;
 		while (!exists && System.currentTimeMillis() < timeout) {
 			try {

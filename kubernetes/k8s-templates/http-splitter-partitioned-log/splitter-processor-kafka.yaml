@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splitter-processor-kafka
+  labels:
+    app: splitter-processor-kafka
+    type: stream-ats
+    component: splitter-processor-kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: splitter-processor-kafka
+  template:
+    metadata:
+      labels:
+        app: splitter-processor-kafka
+        type: acceptance-tests
+        component: splitter-processor-kafka
+    spec:
+      containers:
+        - name: splitter-processor
+          image: springcloudstream/splitter-processor-kafka:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+              value: kafka:9092
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
+              value: kafka-zk:2181
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION
+              value: http-partition-out
+            - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
+              value: splitter-partition-out
+            - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_PRODUCER_PARTITIONKEYEXPRESSION
+              value: payload
+            - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_PRODUCER_PARTITIONCOUNT
+              value: "2"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
+              value: "1"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_AUTOADDPARTITIONS
+              value: "true"
+            - name: SPLITTER_EXPRESSION
+              value: payload.split(' ')
+            - name: LOGGING_FILE_NAME
+              value: splitter-processor-kafka.log
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: logfile,health,info
+            - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/info
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

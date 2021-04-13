@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-0
+  labels:
+    app: log-0
+    type: stream-ats
+    component: log-0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-0
+  template:
+    metadata:
+      labels:
+        app: log-0
+        component: log-0
+    spec:
+      containers:
+        - name: log-0
+          image: springcloudstream/log-sink-kafka:latest
+          ports:
+            - containerPort: 808
+          env:
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+              value: kafka:9092
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
+              value: kafka-zk:2181
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION
+              value: splitter-partition-out
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_GROUP
+              value: foo-group
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED
+              value: "true"
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCEINDEX
+              value: "0"
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT
+              value: "2"
+            - name: LOG_EXPRESSION
+              value: "'From Splitter: '.concat(payload)"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
+              value: "1"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_AUTOADDPARTITIONS
+              value: "true"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_MINPARTITIONCOUNT
+              value: "2"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDINGS_INPUT_CONSUMER_AUTOREBALANCEENABLED
+              value: "false"
+            - name: LOGGING_FILE_NAME
+              value: log-sink.log
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: logfile,health,info
+            - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/info
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

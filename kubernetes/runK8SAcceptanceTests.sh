@@ -81,6 +81,30 @@ function prepare_http_splitter_log_with_kafka_binder() {
     curl -X POST -H "Content-Type: text/plain" --data "how much wood would a woodchuck chuck if that woodchuck could chuck wood" $HTTP_SOURCE_SERVER_URI
 }
 
+function prepare_http_splitter_partitioned_log_with_kafka_binder() {
+
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/http.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/http-svc.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/splitter-processor-kafka.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/splitter-processor-kafka-svc-lb.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/log-0.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/log-0-svc-lb.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/log-1.yaml
+    kubectl create -f k8s-templates/http-splitter-partitioned-log/log-1-svc-lb.yaml
+
+    HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
+    SPLITTER_PROCESSOR_SERVER_URI=http://$(kubectl get service splitter-processor-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG0_SINK_SERVER_URI=http://$(kubectl get service log-0 | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG1_SINK_SERVER_URI=http://$(kubectl get service log-1 | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${SPLITTER_PROCESSOR_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG0_SINK_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG1_SINK_SERVER_URI}/actuator/logfile)
+
+    curl -X POST -H "Content-Type: text/plain" --data "How much wood would a woodchuck chuck if that woodchuck could chuck wood" $HTTP_SOURCE_SERVER_URI
+}
+
 function delete_acceptance_test_components() {
 
     kubectl delete pod,deployment,rc,service -l type="stream-ats"
@@ -174,6 +198,26 @@ then
     exit $BUILD_RETURN_VALUE
 fi
 
+prepare_http_splitter_partitioned_log_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dsplitter.processor.route=$SPLITTER_PROCESSOR_SERVER_URI -Dlog0.sink.route=$LOG0_SINK_SERVER_URI -Dlog1.sink.route=$LOG1_SINK_SERVER_URI
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in partitioning tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+    delete_acceptance_test_infra
+    exit $BUILD_RETURN_VALUE
+fi
 
 delete_acceptance_test_infra
 
