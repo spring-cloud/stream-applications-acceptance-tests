@@ -78,7 +78,7 @@ function prepare_http_splitter_log_with_kafka_binder() {
     $(wait_for_200 ${SPLITTER_PROCESSOR_SERVER_URI}/actuator/logfile)
     $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 
-#    curl -X POST -H "Content-Type: text/plain" --data "foobar" $HTTP_SOURCE_SERVER_URI
+    curl -X POST -H "Content-Type: text/plain" --data "how much wood would a woodchuck chuck if that woodchuck could chuck wood" $HTTP_SOURCE_SERVER_URI
 }
 
 function delete_acceptance_test_components() {
@@ -111,47 +111,47 @@ kubectl create -f k8s-templates/kafka-zk-svc.yaml
 kubectl create -f k8s-templates/kafka-deployment.yaml
 kubectl create -f k8s-templates/kafka-svc.yaml
 
-prepare_ticktock_latest_with_kafka_binder
-
-pushd ../spring-cloud-stream-acceptance-tests
-
-../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$TIME_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
-BUILD_RETURN_VALUE=$?
-
-popd
-
-delete_acceptance_test_components
-
-if [ "$BUILD_RETURN_VALUE" != 0 ]
-then
-    echo "Early exit due to test failure in ticktock tests"
-    duration=$SECONDS
-
-    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-    delete_acceptance_test_infra
-    exit $BUILD_RETURN_VALUE
-fi
-
-prepare_http_transform_log_with_kafka_binder
-
-pushd ../spring-cloud-stream-acceptance-tests
-
-../mvnw clean package -Dtest=HttpTransformerLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dtransformer.processor.route=$TRANSFORMER_PROCESSOR_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
-BUILD_RETURN_VALUE=$?
-
-popd
-
-delete_acceptance_test_components
-
-if [ "$BUILD_RETURN_VALUE" != 0 ]
-then
-    echo "Early exit due to test failure in http/transform/log tests"
-    duration=$SECONDS
-
-    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-    delete_acceptance_test_infra
-    exit $BUILD_RETURN_VALUE
-fi
+#prepare_ticktock_latest_with_kafka_binder
+#
+#pushd ../spring-cloud-stream-acceptance-tests
+#
+#../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$TIME_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
+#BUILD_RETURN_VALUE=$?
+#
+#popd
+#
+#delete_acceptance_test_components
+#
+#if [ "$BUILD_RETURN_VALUE" != 0 ]
+#then
+#    echo "Early exit due to test failure in ticktock tests"
+#    duration=$SECONDS
+#
+#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+#    delete_acceptance_test_infra
+#    exit $BUILD_RETURN_VALUE
+#fi
+#
+#prepare_http_transform_log_with_kafka_binder
+#
+#pushd ../spring-cloud-stream-acceptance-tests
+#
+#../mvnw clean package -Dtest=HttpTransformerLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dtransformer.processor.route=$TRANSFORMER_PROCESSOR_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
+#BUILD_RETURN_VALUE=$?
+#
+#popd
+#
+#delete_acceptance_test_components
+#
+#if [ "$BUILD_RETURN_VALUE" != 0 ]
+#then
+#    echo "Early exit due to test failure in http/transform/log tests"
+#    duration=$SECONDS
+#
+#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+#    delete_acceptance_test_infra
+#    exit $BUILD_RETURN_VALUE
+#fi
 
 prepare_http_splitter_log_with_kafka_binder
 
