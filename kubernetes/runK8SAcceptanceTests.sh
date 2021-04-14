@@ -130,6 +130,22 @@ function prepare_http_router_log_with_kafka_binder() {
     curl -X POST -H "Content-Type: text/plain" --data "ijklmnop" $HTTP_SOURCE_SERVER_URI
 }
 
+function prepare_tcp_log_with_kafka_binder() {
+    kubectl create -f k8s-templates/tcp-log/tcp.yaml
+    kubectl create -f k8s-templates/tcp-log/tcp-svc-lb.yaml
+
+    kubectl create -f k8s-templates/tcp-log/log.yaml
+    kubectl create -f k8s-templates/tcp-log/log-svc-lb.yaml
+
+    TCP_SOURCE_SERVER_URI=http://$(kubectl get service tcp | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    TCP_SOURCE_SERVER_IP=$(kubectl get service tcp | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    $(wait_for_200 ${TCP_SOURCE_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
+}
+
 function delete_acceptance_test_components() {
 
     kubectl delete pod,deployment,rc,service -l type="stream-ats"
@@ -258,6 +274,27 @@ delete_acceptance_test_components
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
     echo "Early exit due to test failure in http-router tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+    delete_acceptance_test_infra
+    exit $BUILD_RETURN_VALUE
+fi
+
+prepare_tcp_log_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=TcpLogAcceptanceTests -Dmaven.test.skip=false -Dtcp.source.route=$TCP_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI -Dtcp.source.ip=$TCP_SOURCE_SERVER_IP
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in tcp-log tests"
     duration=$SECONDS
 
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."

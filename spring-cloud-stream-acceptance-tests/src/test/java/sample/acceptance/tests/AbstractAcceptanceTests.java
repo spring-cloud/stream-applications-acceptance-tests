@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  */
 abstract class AbstractAcceptanceTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractAcceptanceTests.class);
+	protected static final Logger logger = LoggerFactory.getLogger(AbstractAcceptanceTests.class);
 
 	boolean waitForLogEntry(boolean noBoot2, String app, String route, String... entries) {
 		return waitForLogEntryInResource(noBoot2, app, route, entries);
