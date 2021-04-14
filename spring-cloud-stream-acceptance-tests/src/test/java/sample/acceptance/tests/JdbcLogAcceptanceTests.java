@@ -31,24 +31,24 @@ public class JdbcLogAcceptanceTests extends AbstractAcceptanceTests {
 		String jdbcSourceUrl = System.getProperty("jdbc.source.route");
 		String logSinkUrl = System.getProperty("log.sink.route");
 
-
 		boolean foundLogs = waitForLogEntry("JDBC Source", jdbcSourceUrl, "Started JdbcSource");
-		if(!foundLogs) {
+		if (!foundLogs) {
 			fail("Did not find the jdbc source started logging message.");
 		}
 
 		foundLogs = waitForLogEntry("Log Sink", logSinkUrl, "Started LogSink");
-		if(!foundLogs) {
+		if (!foundLogs) {
 			fail("Did not find the log sink started logging message.");
 		}
+		// Convert the expected output text to all lowercase due to various DB platforms may write it out in various cases.
+		verifyLogs(logSinkUrl, "{\"id\":1,\"name\":\"bob\",\"tag\":null}");
+		verifyLogs(logSinkUrl, "{\"id\":2,\"name\":\"jane\",\"tag\":null}");
+		verifyLogs(logSinkUrl, "{\"id\":3,\"name\":\"john\",\"tag\":null}");
 
-		verifyLogs(logSinkUrl, "{\"id\":1,\"name\":\"Bob\",\"tag\":null}");
-		verifyLogs(logSinkUrl, "{\"id\":2,\"name\":\"Jane\",\"tag\":null}");
-		verifyLogs(logSinkUrl, "{\"id\":3,\"name\":\"John\",\"tag\":null}");
 	}
 
 	void verifyLogs(String appUrl, String textToLookfor) {
-		boolean foundMessage = waitForLogEntry("Log Sink", appUrl, textToLookfor);
+		boolean foundMessage = waitForLogEntry("Log Sink", appUrl, true, textToLookfor);
 		if (!foundMessage) {
 			fail("Did not find the message - " + textToLookfor + " - in the logs");
 		}

@@ -33,14 +33,18 @@ abstract class AbstractAcceptanceTests {
 	protected static final Logger logger = LoggerFactory.getLogger(AbstractAcceptanceTests.class);
 
 	boolean waitForLogEntry(boolean noBoot2, String app, String route, String... entries) {
-		return waitForLogEntryInResource(noBoot2, app, route, entries);
+		return waitForLogEntryInResource(noBoot2, app, route, false, entries);
 	}
 
 	boolean waitForLogEntry(String app, String route, String... entries) {
-		return waitForLogEntryInResource(false, app, route, entries);
+		return waitForLogEntryInResource(false, app, route, false, entries);
 	}
 
-	private String getLog(String url) {
+	boolean waitForLogEntry(String app, String route, boolean toLower, String... entries) {
+		return waitForLogEntryInResource(false, app, route, toLower, entries);
+	}
+
+	private String getLog(String url, boolean toLower) {
 		RestTemplate restTemplate = new RestTemplate();
 		String logFileUrl = String.format("%s/logfile", url);
 		String log = null;
@@ -56,10 +60,10 @@ abstract class AbstractAcceptanceTests {
 		} catch (Exception e) {
 			logger.warn("Error while trying to access logfile from '" + logFileUrl + "' due to : " + e);
 		}
-		return log;
+		return toLower ? log.toLowerCase() : log;
 	}
 
-	private boolean waitForLogEntryInResource(boolean noBoot2, String app, String route, String... entries) {
+	private boolean waitForLogEntryInResource(boolean noBoot2, String app, String route, boolean toLower, String... entries) {
 		logger.info("Looking for '" + StringUtils.arrayToCommaDelimitedString(entries) + "' in logfile for " + app + " - " + route);
 		long timeout = System.currentTimeMillis() + (60 * 1000);
 		boolean exists = false;
@@ -72,9 +76,10 @@ abstract class AbstractAcceptanceTests {
 			}
 			logger.info("Polling to get log file. Remaining poll time = "
 					+ (timeout - System.currentTimeMillis() + " ms."));
-			String log = noBoot2 ? getLog(route) : getLog(route + "/actuator");
+			String log = noBoot2 ? getLog(route, toLower) : getLog(route + "/actuator", toLower);
+			
 			if (log != null) {
-				if (Stream.of(entries).allMatch(s -> log.contains(s))) {
+				if (Stream.of(entries).allMatch(log::contains)) {
 					exists = true;
 				}
 			}
