@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-bar
+  labels:
+    app: log-bar
+    type: stream-ats
+    component: log-bar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-bar
+  template:
+    metadata:
+      labels:
+        app: log-bar
+        component: log-bar
+    spec:
+      containers:
+        - name: log-bar
+          image: springcloudstream/log-sink-kafka:latest
+          ports:
+            - containerPort: 808
+          env:
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+              value: kafka:9092
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
+              value: kafka-zk:2181
+            - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION
+              value: router.bar
+            - name: LOG_EXPRESSION
+              value: "'From Router: '.concat(payload)"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
+              value: "1"
+            - name: LOGGING_FILE_NAME
+              value: log-sink.log
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: logfile,health,info
+            - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/info
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

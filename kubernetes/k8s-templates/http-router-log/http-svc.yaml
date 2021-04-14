@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-source
+  labels:
+    app: http-source
+    component: http-source
+    type: stream-ats
+    spring-deployment-id: http-source
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      name: http-source-port
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: http-source
+    component: http-source

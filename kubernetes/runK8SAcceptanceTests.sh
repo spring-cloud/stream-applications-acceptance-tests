@@ -105,6 +105,31 @@ function prepare_http_splitter_partitioned_log_with_kafka_binder() {
     curl -X POST -H "Content-Type: text/plain" --data "How much wood would a woodchuck chuck if that woodchuck could chuck wood" $HTTP_SOURCE_SERVER_URI
 }
 
+function prepare_http_router_log_with_kafka_binder() {
+
+    kubectl create -f k8s-templates/http-router-log/http.yaml
+    kubectl create -f k8s-templates/http-router-log/http-svc.yaml
+    kubectl create -f k8s-templates/http-router-log/router-sink-kafka.yaml
+    kubectl create -f k8s-templates/http-router-log/router-sink-kafka-svc-lb.yaml
+    kubectl create -f k8s-templates/http-router-log/log-foo.yaml
+    kubectl create -f k8s-templates/http-router-log/log-foo-svc-lb.yaml
+    kubectl create -f k8s-templates/http-router-log/log-bar.yaml
+    kubectl create -f k8s-templates/http-router-log/log-bar-svc-lb.yaml
+
+    HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
+    ROUTER_SINK_SERVER_URI=http://$(kubectl get service router-sink-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG_FOO_SINK_SERVER_URI=http://$(kubectl get service log-foo | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG_BAR_SINK_SERVER_URI=http://$(kubectl get service log-bar | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${ROUTER_SINK_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG_FOO_SINK_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG_BAR_SINK_SERVER_URI}/actuator/logfile)
+
+    curl -X POST -H "Content-Type: text/plain" --data "abcdefgh" $HTTP_SOURCE_SERVER_URI
+    curl -X POST -H "Content-Type: text/plain" --data "ijklmnop" $HTTP_SOURCE_SERVER_URI
+}
+
 function delete_acceptance_test_components() {
 
     kubectl delete pod,deployment,rc,service -l type="stream-ats"
@@ -212,6 +237,27 @@ delete_acceptance_test_components
 if [ "$BUILD_RETURN_VALUE" != 0 ]
 then
     echo "Early exit due to test failure in partitioning tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+    delete_acceptance_test_infra
+    exit $BUILD_RETURN_VALUE
+fi
+
+prepare_http_router_log_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=HttpRouterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Drouter.sink.route=$ROUTER_SINK_SERVER_URI -Dlog.foo.sink.route=$LOG_FOO_SINK_SERVER_URI -Dlog.bar.sink.route=$LOG_BAR_SINK_SERVER_URI
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in http-router tests"
     duration=$SECONDS
 
     echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."

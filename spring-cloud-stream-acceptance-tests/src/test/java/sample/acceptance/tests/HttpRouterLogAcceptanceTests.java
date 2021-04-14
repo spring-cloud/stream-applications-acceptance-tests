@@ -22,59 +22,40 @@ import org.springframework.web.client.RestTemplate;
 
 import static org.junit.Assert.fail;
 
-public class PartitioningAcceptanceTests extends AbstractAcceptanceTests {
+public class HttpRouterLogAcceptanceTests extends AbstractAcceptanceTests {
 
 	@Test
 	public void testHttpSplitterLog() {
 
 		String httpSourceUrl = System.getProperty("http.source.route");
-		String splitterProcessorUrl = System.getProperty("splitter.processor.route");
-		String log0SinkUrl = System.getProperty("log0.sink.route");
-		String log1SinkUrl = System.getProperty("log1.sink.route");
+		String routerSinkUrl = System.getProperty("router.sink.route");
+		String logFooSinkUrl = System.getProperty("log.foo.sink.route");
+		String logBarSinkUrl = System.getProperty("log.bar.sink.route");
 
 		boolean foundLogs = waitForLogEntry("HTTP Source", httpSourceUrl, "Started HttpSource");
 		if (!foundLogs) {
 			fail("Did not find the http source started logging message.");
 		}
 
-		foundLogs = waitForLogEntry("Splitter Processor", splitterProcessorUrl, "Started SplitterProcessor");
+		foundLogs = waitForLogEntry("Router Sink", routerSinkUrl, "Started RouterSink");
 		if (!foundLogs) {
-			fail("Did not find the splitter processor started logging message.");
+			fail("Did not find the router sink started logging message.");
 		}
 
-		foundLogs = waitForLogEntry("Log Sink", log0SinkUrl, "Started LogSink");
+		foundLogs = waitForLogEntry("Log Sink", logFooSinkUrl, "Started LogSink");
 		if (!foundLogs) {
-			fail("Did not find the log sink started logging message in log-0.");
+			fail("Did not find the log sink started logging message in log-foo.");
 		}
 
-		foundLogs = waitForLogEntry("Log Sink", log1SinkUrl, "Started LogSink");
+		foundLogs = waitForLogEntry("Log Sink", logBarSinkUrl, "Started LogSink");
 		if (!foundLogs) {
-			fail("Did not find the log sink started logging message in log-1.");
+			fail("Did not find the log sink started logging message in log-bar.");
 		}
 
 		RestTemplate restTemplate = new RestTemplate();
 
-		try {
-			restTemplate.postForObject(
-					httpSourceUrl,
-					"How much wood would a woodchuck chuck if that woodchuck could chuck wood", String.class);
-		}
-		catch (Exception e) {
-			//pass through
-		}
-
-		verifyLogs(log0SinkUrl, ": How");
-		verifyLogs(log0SinkUrl, ": chuck");
-
-		verifyLogs(log1SinkUrl, ": much");
-		verifyLogs(log1SinkUrl, ": wood");
-		verifyLogs(log1SinkUrl, ": a");
-		verifyLogs(log1SinkUrl, ": woodchuck");
-		verifyLogs(log1SinkUrl, ": if");
-		verifyLogs(log1SinkUrl, ": that");
-		verifyLogs(log1SinkUrl, ": woodchuck");
-		verifyLogs(log1SinkUrl, ": could");
-		verifyLogs(log1SinkUrl, ": wood");
+		verifyLogs(logFooSinkUrl, ": abcdefgh");
+		verifyLogs(logBarSinkUrl, ": ijklmnop");
 	}
 
 	void verifyLogs(String appUrl, String textToLookfor) {

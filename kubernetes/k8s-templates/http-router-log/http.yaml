@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-source
+  labels:
+    app: http-source
+    type: stream-ats
+    component: http-source
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: http-source
+  template:
+    metadata:
+      labels:
+        app: http-source
+        component: http-source
+    spec:
+      containers:
+        - name: http-source
+          image: springcloudstream/http-source-kafka:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+              value: kafka:9092
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
+              value: kafka-zk:2181
+            - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
+              value: http-router-out
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
+              value: "1"
+            - name: LOGGING_FILE_NAME
+              value: http-source.log
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: logfile,health,info
+            - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/info
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

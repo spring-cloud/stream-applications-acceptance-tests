@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-bar
+  labels:
+    app: log-bar
+    component: log-bar
+    type: stream-ats
+    spring-deployment-id: log-bar
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    name: log-port
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: log-bar
+    component: log-bar
