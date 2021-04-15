@@ -28,13 +28,21 @@ spec:
           - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
             value: kafka-zk:2181
           - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
-            value: fromjdbcsource
+            value: frommysql
           - name: JDBC_SUPPLIER_QUERY
             value: "select id, name, tag from test order by id"
           - name: SPRING_DATASOURCE_INITIALIZATION-MODE
             value: ALWAYS
           - name: SPRING_DATASOURCE_SCHEMA
             value: https://raw.githubusercontent.com/spring-cloud/stream-applications-acceptance-tests/master/db-scripts/sample-schema.sql
+          - name: SPRING_DATASOURCE_USERNAME
+            value: root
+          - name: SPRING_DATASOURCE_PASSWORD
+            value: secret
+          - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+            value: org.mariadb.jdbc.Driver
+          - name: SPRING_DATASOURCE_URL
+            value: jdbc:mariadb://mysql:3306
           - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
             value: "1"
           - name: LOGGING_FILE_NAME

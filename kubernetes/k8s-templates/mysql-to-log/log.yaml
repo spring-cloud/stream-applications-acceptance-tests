@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jdbc
+  name: log
   labels:
-    app: jdbc
+    app: log
     type: stream-ats
-    component: jdbc
+    component: log
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: jdbc
+      app: log
   template:
     metadata:
       labels:
-        app: jdbc
-        component: jdbc
+        app: log
+        component: log
     spec:
       containers:
-      - name: jdbc
-        image: springcloudstream/jdbc-source-kafka:latest
+      - name: log
+        image: springcloudstream/log-sink-kafka:latest
         ports:
         - containerPort: 8080
         env:
@@ -27,18 +27,14 @@ spec:
             value: kafka:9092
           - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES
             value: kafka-zk:2181
-          - name: SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION
-            value: fromjdbcsource
-          - name: JDBC_SUPPLIER_QUERY
-            value: "select id, name, tag from test order by id"
-          - name: SPRING_DATASOURCE_INITIALIZATION-MODE
-            value: ALWAYS
-          - name: SPRING_DATASOURCE_SCHEMA
-            value: https://raw.githubusercontent.com/spring-cloud/stream-applications-acceptance-tests/master/db-scripts/sample-schema.sql
+          - name: SPRING_CLOUD_STREAM_BINDINGS_INPUT_DESTINATION
+            value: frommysql
           - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_REPLICATIONFACTOR
             value: "1"
+          - name: LOG_EXPRESSION
+            value: "'From JDBC Source: '.concat(payload)"
           - name: LOGGING_FILE_NAME
-            value: jdbc-source.log
+            value: log-sink.log
           - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
             value: logfile,health,info
           - name: SPRING_CLOUD_STREAMAPP_SECURITY_ENABLED

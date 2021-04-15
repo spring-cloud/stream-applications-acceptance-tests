@@ -160,6 +160,24 @@ function prepare_jdbc_log_with_kafka_binder() {
     $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 }
 
+function prepare_mysql_log_with_kafka_binder() {
+
+    kubectl create -f k8s-templates/mysql-to-log/mysql-deployment.yaml
+    kubectl create -f k8s-templates/mysql-to-log/mysql-svc.yaml
+
+    kubectl create -f k8s-templates/mysql-to-log/jdbc.yaml
+    kubectl create -f k8s-templates/mysql-to-log/jdbc-svc-lb.yaml
+
+    kubectl create -f k8s-templates/mysql-to-log/log.yaml
+    kubectl create -f k8s-templates/mysql-to-log/log-svc-lb.yaml
+
+    JDBC_SOURCE_SERVER_URI=http://$(kubectl get service jdbc | awk '{print $4}' | grep -v EXTERNAL-IP)
+    LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
+
+    $(wait_for_200 ${JDBC_SOURCE_SERVER_URI}/actuator/logfile)
+    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
+}
+
 function delete_acceptance_test_components() {
 
     kubectl delete pod,deployment,rc,service -l type="stream-ats"
@@ -336,6 +354,28 @@ then
     delete_acceptance_test_infra
     exit $BUILD_RETURN_VALUE
 fi
+
+prepare_mysql_log_with_kafka_binder
+
+pushd ../spring-cloud-stream-acceptance-tests
+
+../mvnw clean package -Dtest=JdbcLogAcceptanceTests -Dmaven.test.skip=false -Djdbc.source.route=$JDBC_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
+BUILD_RETURN_VALUE=$?
+
+popd
+
+delete_acceptance_test_components
+
+if [ "$BUILD_RETURN_VALUE" != 0 ]
+then
+    echo "Early exit due to test failure in tcp-log tests"
+    duration=$SECONDS
+
+    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+    delete_acceptance_test_infra
+    exit $BUILD_RETURN_VALUE
+fi
+
 
 delete_acceptance_test_infra
 

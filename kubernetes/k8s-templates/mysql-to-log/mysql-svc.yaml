@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+    component: mysql-db
+    type: stream-ats
+spec:
+  ports:
+    - port: 3306
+      name: kafka-port
+      targetPort: 3306
+      protocol: TCP
+  selector:
+    app: mysql
+    component: mysql-db
