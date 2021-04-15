@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS test;
+USE test;
 DROP TABLE IF EXISTS test;
 create table test(
   id bigint,
