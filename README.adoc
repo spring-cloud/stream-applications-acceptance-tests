@@ -1,0 +1,42 @@
+# Stream Applications Acceptance tests
+
+This repository contains extended testing for https://github.com/spring-cloud/stream-applications[stream applications].
+
+## Integration Tests
+
+Standalone integration tests for testing the various applications.
+
+## Acceptance tests on Kubernetes
+
+We test a handful of stream pipelines standalone to ensure that they can be run on Kubernetes.
+
+Following are the test pipelines.
+
+* Ticktock (time | log)
+* HTTP | splitter | log
+* HTTP | splitter | log (with splitter partitioning the data)
+* HTTP | router | log
+* HTTP | transformer | log
+* JDBC (H2) | log
+* JDBC (MYSQL) | log
+* TCP | log
+
+### Running the tests on minikube
+
+Make sure that you have minikube running and enough memory allocated.
+
+Set the following environment variable in a shell terminal.
+
+`export CLUSTER_NAME=minikube`
+
+In the same terminal window, go to the root of this repository:
+
+```
+cd kubernetes
+./runK8SAcceptanceTests.sh
+```
+
+This script will run all the available tests.
+
+## Acceptance tests on Cloudfoundry
+
