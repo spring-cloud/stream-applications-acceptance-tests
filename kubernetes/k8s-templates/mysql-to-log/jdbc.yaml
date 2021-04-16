@@ -34,7 +34,7 @@ spec:
           - name: SPRING_DATASOURCE_INITIALIZATION-MODE
             value: ALWAYS
           - name: SPRING_DATASOURCE_SCHEMA
-            value: https://raw.githubusercontent.com/spring-cloud/stream-applications-acceptance-tests/master/db-scripts/sample-schema.sql
+            value: https://raw.githubusercontent.com/spring-cloud/stream-applications-acceptance-tests/master/db-scripts/sample-schema-mysql.sql
           - name: SPRING_DATASOURCE_USERNAME
             value: root
           - name: SPRING_DATASOURCE_PASSWORD

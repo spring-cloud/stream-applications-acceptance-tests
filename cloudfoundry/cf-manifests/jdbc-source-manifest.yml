@@ -13,7 +13,7 @@ applications:
     SPRING_CLOUD_STREAM_BINDINGS_OUTPUT_DESTINATION: fromjdbcsource
     JDBC_QUERY: 'select id, name, tag from test order by id'
     SPRING_DATASOURCE_INITIALIZATION-MODE: ALWAYS
-    SPRING_DATASOURCE_SCHEMA: https://raw.githubusercontent.com/spring-cloud/spring-cloud-stream-acceptance-tests/master/db-scripts/sample-schema.sql
+    SPRING_DATASOURCE_SCHEMA: https://raw.githubusercontent.com/spring-cloud/spring-cloud-stream-acceptance-tests/master/db-scripts/sample-schema-mysql.sql
 services:
 - scst-rabbit
 - scst-mysql
