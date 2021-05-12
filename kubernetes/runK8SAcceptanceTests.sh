@@ -15,12 +15,14 @@ popd () {
 function wait_for_200 {
   local READY_FOR_TESTS=1
   for i in $( seq 1 "${RETRIES}" ); do
-    STATUS=$(curl -s -o /dev/null -w '%{http_code}' ${1})
+    SERVER_URI=http://$(kubectl get service ${1} | awk '{print $4}' | grep -v EXTERNAL-IP)
+    FULL_SERVER_URI=$SERVER_URI/actuator/logfile
+    STATUS=$(curl -s -o /dev/null -w '%{http_code}' ${FULL_SERVER_URI})
     if [ $STATUS -eq 200 ]; then
       READY_FOR_TESTS=0
       break
     else
-      echo "Failed to connect to ${1} with status code: $STATUS. Attempt  #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds" >&2
+      echo "Failed to connect to ${FULL_SERVER_URI} with status code: $STATUS. Attempt  #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds" >&2
       sleep "${WAIT_TIME}"
     fi
   done
@@ -34,11 +36,11 @@ function prepare_ticktock_latest_with_kafka_binder() {
     kubectl create -f k8s-templates/ticktock/log.yaml
     kubectl create -f k8s-templates/ticktock/log-svc-lb.yaml
 
+    $(wait_for_200 time)
+    $(wait_for_200 log)
+
     TIME_SOURCE_SERVER_URI=http://$(kubectl get service time | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${TIME_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 }
 
 function prepare_http_transform_log_with_kafka_binder() {
@@ -50,13 +52,13 @@ function prepare_http_transform_log_with_kafka_binder() {
     kubectl create -f k8s-templates/http-transfomer-log/log.yaml
     kubectl create -f k8s-templates/http-transfomer-log/log-svc-lb.yaml
 
+    $(wait_for_200 http-source)
+    $(wait_for_200 transform-processor-kafka)
+    $(wait_for_200 log)
+
     HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
     TRANSFORMER_PROCESSOR_SERVER_URI=http://$(kubectl get service transform-processor-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${TRANSFORMER_PROCESSOR_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 
     curl -X POST -H "Content-Type: text/plain" --data "foobar" $HTTP_SOURCE_SERVER_URI
 }
@@ -70,13 +72,13 @@ function prepare_http_splitter_log_with_kafka_binder() {
     kubectl create -f k8s-templates/http-splitter-log/log.yaml
     kubectl create -f k8s-templates/http-splitter-log/log-svc-lb.yaml
 
+    $(wait_for_200 http-source)
+    $(wait_for_200 splitter-processor-kafka)
+    $(wait_for_200 log)
+
     HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
     SPLITTER_PROCESSOR_SERVER_URI=http://$(kubectl get service splitter-processor-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${SPLITTER_PROCESSOR_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 
     curl -X POST -H "Content-Type: text/plain" --data "how much wood would a woodchuck chuck if that woodchuck could chuck wood" $HTTP_SOURCE_SERVER_URI
 }
@@ -92,15 +94,15 @@ function prepare_http_splitter_partitioned_log_with_kafka_binder() {
     kubectl create -f k8s-templates/http-splitter-partitioned-log/log-1.yaml
     kubectl create -f k8s-templates/http-splitter-partitioned-log/log-1-svc-lb.yaml
 
+    $(wait_for_200 http-source)
+    $(wait_for_200 splitter-processor-kafka)
+    $(wait_for_200 log-0)
+    $(wait_for_200 log-1)
+
     HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
     SPLITTER_PROCESSOR_SERVER_URI=http://$(kubectl get service splitter-processor-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG0_SINK_SERVER_URI=http://$(kubectl get service log-0 | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG1_SINK_SERVER_URI=http://$(kubectl get service log-1 | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${SPLITTER_PROCESSOR_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG0_SINK_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG1_SINK_SERVER_URI}/actuator/logfile)
 
     curl -X POST -H "Content-Type: text/plain" --data "How much wood would a woodchuck chuck if that woodchuck could chuck wood" $HTTP_SOURCE_SERVER_URI
 }
@@ -116,15 +118,15 @@ function prepare_http_router_log_with_kafka_binder() {
     kubectl create -f k8s-templates/http-router-log/log-bar.yaml
     kubectl create -f k8s-templates/http-router-log/log-bar-svc-lb.yaml
 
+    $(wait_for_200 http-source)
+    $(wait_for_200 router-sink-kafka)
+    $(wait_for_200 log-foo)
+    $(wait_for_200 log-bar)
+
     HTTP_SOURCE_SERVER_URI=http://$(kubectl get service http-source | awk '{print $4}' | grep -v EXTERNAL-IP)
     ROUTER_SINK_SERVER_URI=http://$(kubectl get service router-sink-kafka | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_FOO_SINK_SERVER_URI=http://$(kubectl get service log-foo | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_BAR_SINK_SERVER_URI=http://$(kubectl get service log-bar | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${HTTP_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${ROUTER_SINK_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_FOO_SINK_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_BAR_SINK_SERVER_URI}/actuator/logfile)
 
     curl -X POST -H "Content-Type: text/plain" --data "abcdefgh" $HTTP_SOURCE_SERVER_URI
     curl -X POST -H "Content-Type: text/plain" --data "ijklmnop" $HTTP_SOURCE_SERVER_URI
@@ -137,13 +139,13 @@ function prepare_tcp_log_with_kafka_binder() {
     kubectl create -f k8s-templates/tcp-log/log.yaml
     kubectl create -f k8s-templates/tcp-log/log-svc-lb.yaml
 
+    $(wait_for_200 tcp)
+    $(wait_for_200 log)
+
     TCP_SOURCE_SERVER_URI=http://$(kubectl get service tcp | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
 
     TCP_SOURCE_SERVER_IP=$(kubectl get service tcp | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${TCP_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 }
 
 function prepare_jdbc_log_with_kafka_binder() {
@@ -153,11 +155,12 @@ function prepare_jdbc_log_with_kafka_binder() {
     kubectl create -f k8s-templates/jdbc-log/log.yaml
     kubectl create -f k8s-templates/jdbc-log/log-svc-lb.yaml
 
+
+    $(wait_for_200 jdbc)
+    $(wait_for_200 log)
+
     JDBC_SOURCE_SERVER_URI=http://$(kubectl get service jdbc | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${JDBC_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 }
 
 function prepare_mysql_log_with_kafka_binder() {
@@ -171,11 +174,12 @@ function prepare_mysql_log_with_kafka_binder() {
     kubectl create -f k8s-templates/mysql-to-log/log.yaml
     kubectl create -f k8s-templates/mysql-to-log/log-svc-lb.yaml
 
+
+    $(wait_for_200 jdbc)
+    $(wait_for_200 log)
+
     JDBC_SOURCE_SERVER_URI=http://$(kubectl get service jdbc | awk '{print $4}' | grep -v EXTERNAL-IP)
     LOG_SINK_SERVER_URI=http://$(kubectl get service log | awk '{print $4}' | grep -v EXTERNAL-IP)
-
-    $(wait_for_200 ${JDBC_SOURCE_SERVER_URI}/actuator/logfile)
-    $(wait_for_200 ${LOG_SINK_SERVER_URI}/actuator/logfile)
 }
 
 function delete_acceptance_test_components() {
