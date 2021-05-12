@@ -210,7 +210,7 @@ kubectl create -f k8s-templates/kafka-svc.yaml
 
 prepare_ticktock_latest_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$TIME_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
@@ -231,7 +231,7 @@ fi
 
 prepare_http_transform_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dtransform.processor.route=$TRANSFORMER_PROCESSOR_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
@@ -252,7 +252,7 @@ fi
 
 prepare_http_splitter_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dsplitter.processor.route=$SPLITTER_PROCESSOR_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
@@ -273,7 +273,7 @@ fi
 
 prepare_http_splitter_partitioned_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dsplitter.processor.route=$SPLITTER_PROCESSOR_SERVER_URI -Dlog0.sink.route=$LOG0_SINK_SERVER_URI -Dlog1.sink.route=$LOG1_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
@@ -294,7 +294,7 @@ fi
 
 prepare_http_router_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=HttpRouterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Drouter.sink.route=$ROUTER_SINK_SERVER_URI -Dlog.foo.sink.route=$LOG_FOO_SINK_SERVER_URI -Dlog.bar.sink.route=$LOG_BAR_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
@@ -315,7 +315,7 @@ fi
 
 prepare_tcp_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=TcpLogAcceptanceTests -Dmaven.test.skip=false -Dtcp.source.route=$TCP_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI -Dtcp.source.ip=$TCP_SOURCE_SERVER_IP
 BUILD_RETURN_VALUE=$?
@@ -336,7 +336,7 @@ fi
 
 prepare_jdbc_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=JdbcLogAcceptanceTests -Dmaven.test.skip=false -Djdbc.source.route=$JDBC_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
@@ -345,7 +345,7 @@ popd
 
 delete_acceptance_test_components
 
-if [ "$BUILD_RETURN_VALUE" != 0 ]
+if [ "$BUILD_RETURN_VALUE" != 0 ]q
 then
     echo "Early exit due to test failure in tcp-log tests"
     duration=$SECONDS
@@ -357,7 +357,7 @@ fi
 
 prepare_mysql_log_with_kafka_binder
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=JdbcLogAcceptanceTests -Dmaven.test.skip=false -Djdbc.source.route=$JDBC_SOURCE_SERVER_URI -Dlog.sink.route=$LOG_SINK_SERVER_URI
 BUILD_RETURN_VALUE=$?
