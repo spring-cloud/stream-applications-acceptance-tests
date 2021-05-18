@@ -35,7 +35,7 @@ function prepare_jdbc_log_with_rabbit_binder() {
 
     JDBC_SOURCE_ROUTE=`grep routes /tmp/jdbc-source-route.txt | awk '{ print $2 }'`
 
-    FULL_JDBC_SOURCE_ROUTE=http://$JDBC_SOURCE_ROUTE
+    FULL_JDBC_SOURCE_ROUTE=https://$JDBC_SOURCE_ROUTE
 
     cf push -f ./cf-manifests/jdbc-log-sink-manifest.yml
 
@@ -43,7 +43,7 @@ function prepare_jdbc_log_with_rabbit_binder() {
 
     JDBC_LOG_SINK_ROUTE=`grep routes /tmp/jdbc-log-sink-route.txt | awk '{ print $2 }'`
 
-    FULL_JDBC_LOG_SINK_ROUTE=http://$JDBC_LOG_SINK_ROUTE
+    FULL_JDBC_LOG_SINK_ROUTE=https://$JDBC_LOG_SINK_ROUTE
 }
 
 function prepare_http_transform_log_with_rabbit_binder() {
@@ -67,7 +67,7 @@ function prepare_http_transform_log_with_rabbit_binder() {
 
     HTTP_SOURCE_ROUTE=`grep routes /tmp/http-source-route.txt | awk '{ print $2 }'`
 
-    FULL_HTTP_SOURCE_ROUTE=http://$HTTP_SOURCE_ROUTE
+    FULL_HTTP_SOURCE_ROUTE=https://$HTTP_SOURCE_ROUTE
 
     cf push -f ./cf-manifests/transform-processor-manifest.yml
 
@@ -75,7 +75,7 @@ function prepare_http_transform_log_with_rabbit_binder() {
 
     TRANSFORM_PROCESSOR_ROUTE=`grep routes /tmp/transform-processor-route.txt | awk '{ print $2 }'`
 
-    FULL_TRANSFORM_PROCESSOR_ROUTE=http://$TRANSFORM_PROCESSOR_ROUTE
+    FULL_TRANSFORM_PROCESSOR_ROUTE=https://$TRANSFORM_PROCESSOR_ROUTE
 
     cf push -f ./cf-manifests/httptransform-log-sink-manifest.yml
 
@@ -83,7 +83,9 @@ function prepare_http_transform_log_with_rabbit_binder() {
 
     HTTPTRANSFORM_LOG_SINK_ROUTE=`grep routes /tmp/httptransform-log-sink-route.txt | awk '{ print $2 }'`
 
-    FULL_HTTPTRANSFORM_LOG_SINK_ROUTE=http://$HTTPTRANSFORM_LOG_SINK_ROUTE
+    FULL_HTTPTRANSFORM_LOG_SINK_ROUTE=https://$HTTPTRANSFORM_LOG_SINK_ROUTE
+
+    curl -X POST -H "Content-Type: text/plain" --data "foobar" $FULL_HTTP_SOURCE_ROUTE
 }
 
 function prepare_http_splitter_log_with_rabbit_binder() {
@@ -107,7 +109,7 @@ function prepare_http_splitter_log_with_rabbit_binder() {
 
     HTTP_SOURCE_ROUTE=`grep routes /tmp/http-source-route.txt | awk '{ print $2 }'`
 
-    FULL_HTTP_SOURCE_ROUTE=http://$HTTP_SOURCE_ROUTE
+    FULL_HTTP_SOURCE_ROUTE=https://$HTTP_SOURCE_ROUTE
 
     cf push -f ./cf-manifests/splitter-processor-manifest.yml
 
@@ -115,7 +117,7 @@ function prepare_http_splitter_log_with_rabbit_binder() {
 
     SPLITTER_PROCESSOR_ROUTE=`grep routes /tmp/splitter-processor-route.txt | awk '{ print $2 }'`
 
-    FULL_SPLITTER_PROCESSOR_ROUTE=http://$SPLITTER_PROCESSOR_ROUTE
+    FULL_SPLITTER_PROCESSOR_ROUTE=https://$SPLITTER_PROCESSOR_ROUTE
 
     cf push -f ./cf-manifests/httpsplitter-log-sink-manifest.yml
 
@@ -123,7 +125,9 @@ function prepare_http_splitter_log_with_rabbit_binder() {
 
     HTTPSPLITTER_LOG_SINK_ROUTE=`grep routes /tmp/httpsplitter-log-sink-route.txt | awk '{ print $2 }'`
 
-    FULL_HTTPSPLITTER_LOG_SINK_ROUTE=http://$HTTPSPLITTER_LOG_SINK_ROUTE
+    FULL_HTTPSPLITTER_LOG_SINK_ROUTE=https://$HTTPSPLITTER_LOG_SINK_ROUTE
+
+    curl -X POST -H "Content-Type: text/plain" --data "how much wood would a woodchuck chuck if that woodchuck could chuck wood" $FULL_HTTP_SOURCE_ROUTE
 }
 
 function prepare_ticktock_latest_with_rabbit_binder() {
@@ -145,7 +149,7 @@ function prepare_ticktock_latest_with_rabbit_binder() {
 
     TICKTOCK_TIME_SOURCE_ROUTE=`grep routes /tmp/ticktock-time-source-route.txt | awk '{ print $2 }'`
 
-    FULL_TICKTOCK_TIME_SOURCE_ROUTE=http://$TICKTOCK_TIME_SOURCE_ROUTE
+    FULL_TICKTOCK_TIME_SOURCE_ROUTE=https://$TICKTOCK_TIME_SOURCE_ROUTE
 
     cf push -f ./cf-manifests/log-sink-manifest.yml
 
@@ -153,7 +157,7 @@ function prepare_ticktock_latest_with_rabbit_binder() {
 
     TICKTOCK_LOG_SINK_ROUTE=`grep routes /tmp/ticktock-log-sink-route.txt | awk '{ print $2 }'`
 
-    FULL_TICKTOCK_LOG_SINK_ROUTE=http://$TICKTOCK_LOG_SINK_ROUTE
+    FULL_TICKTOCK_LOG_SINK_ROUTE=https://$TICKTOCK_LOG_SINK_ROUTE
 }
 
 #Main script starting
@@ -164,7 +168,7 @@ echo "Prepare artifacts for jdbc | log testing"
 
 prepare_jdbc_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=JdbcLogAcceptanceTests -Dmaven.test.skip=false -Djdbc.source.route=$FULL_JDBC_SOURCE_ROUTE -Dlog.sink.route=$FULL_JDBC_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
@@ -192,12 +196,11 @@ then
     exit $BUILD_RETURN_VALUE
 fi
 
-
 echo "Prepare artifacts for http | transform | log testing"
 
 prepare_http_transform_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=HttpTransformLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dtransform.processor.route=$FULL_TRANSFORM_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPTRANSFORM_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
@@ -205,7 +208,7 @@ BUILD_RETURN_VALUE=$?
 popd
 
 cf stop http-source-rabbit && cf delete http-source-rabbit -f
-cf stop transform-processor-rabbit && cf delete splitter-processor-rabbit -f
+cf stop transform-processor-rabbit && cf delete transform-processor-rabbit -f
 cf stop log-sink-rabbit && cf delete log-sink-rabbit -f
 
 cf logout
@@ -232,7 +235,7 @@ echo "Prepare artifacts for http | splitter | log testing"
 
 prepare_http_splitter_log_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=HttpSplitterLogAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$FULL_HTTP_SOURCE_ROUTE -Dsplitter.processor.route=$FULL_SPLITTER_PROCESSOR_ROUTE -Dlog.sink.route=$FULL_HTTPSPLITTER_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
@@ -271,7 +274,7 @@ echo "Prepare artifacts for ticktock testing"
 
 prepare_ticktock_latest_with_rabbit_binder $1 $2 $3 $4 $5 $6
 
-pushd ../spring-cloud-stream-acceptance-tests
+pushd ../stream-applications-acceptance-tests
 
 ../mvnw clean package -Dtest=TickTockLatestAcceptanceTests -Dmaven.test.skip=false -Dtime.source.route=$FULL_TICKTOCK_TIME_SOURCE_ROUTE -Dlog.sink.route=$FULL_TICKTOCK_LOG_SINK_ROUTE
 BUILD_RETURN_VALUE=$?
