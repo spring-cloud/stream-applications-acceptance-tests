@@ -29,6 +29,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.app.test.integration.AppLog;
 import org.springframework.cloud.stream.app.test.integration.OutputMatcher;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainer;
 import org.springframework.cloud.stream.app.test.integration.StreamAppContainerTestUtils;
@@ -56,7 +57,7 @@ public abstract class HttpSourceTests {
 				.withEnv("SERVER_PORT", String.valueOf(serverPort))
 				.withExposedPorts(serverPort)
 				.waitingFor(Wait.forListeningPort().withStartupTimeout(DEFAULT_DURATION));
-		source.start();
+		source.withLogConsumer(AppLog.appLog("http")).start();
 	}
 
 	@Autowired
@@ -74,8 +75,8 @@ public abstract class HttpSourceTests {
 		webClient
 				.post()
 				.uri("http://localhost:" + source.getMappedPort(serverPort))
-				.contentType(MediaType.TEXT_PLAIN)
-				.body(Mono.just("Hello"), String.class)
+				.contentType(MediaType.valueOf("application/x-www-form-url-encoded"))
+				.body(Mono.just("Hello".getBytes()), byte[].class)
 				.exchange()
 				.subscribe(r -> {
 					httpStatus.set(r.statusCode());
