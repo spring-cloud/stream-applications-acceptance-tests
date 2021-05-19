@@ -28,7 +28,7 @@ public abstract class Configuration {
 	private static final String SPRING_CLOUD_STREAM_APPLICATIONS_VERSION = "spring.cloud.stream.applications.version";
 
 	static {
-		VERSION = System.getProperty(SPRING_CLOUD_STREAM_APPLICATIONS_VERSION, "3.0.0-SNAPSHOT");
+		VERSION = System.getProperty(SPRING_CLOUD_STREAM_APPLICATIONS_VERSION, "latest");
 	}
 
 	public static class VersionSupplier implements Supplier<String> {
