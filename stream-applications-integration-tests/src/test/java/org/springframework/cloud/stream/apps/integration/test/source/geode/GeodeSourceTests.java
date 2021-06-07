@@ -64,7 +64,7 @@ abstract class GeodeSourceTests {
 
 	@Container
 	private static final GeodeContainer geode = (GeodeContainer) new GeodeContainer(new ImageFromDockerfile()
-			.withFileFromClasspath("Dockerfile", "geode/Dockerfile")
+			.withFileFromClasspath("Dockerfile", "geode-test/Dockerfile")
 			.withBuildArg("CACHE_SERVER_PORT", String.valueOf(cacheServerPort))
 			.withBuildArg("LOCATOR_PORT", String.valueOf(locatorPort)),
 			locatorPort, cacheServerPort)
