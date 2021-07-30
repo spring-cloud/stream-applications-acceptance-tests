@@ -275,26 +275,26 @@ then
     exit $BUILD_RETURN_VALUE
 fi
 
-prepare_http_splitter_partitioned_log_with_kafka_binder
-
-pushd ../stream-applications-acceptance-tests
-
-../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dsplitter.processor.route=$SPLITTER_PROCESSOR_SERVER_URI -Dlog0.sink.route=$LOG0_SINK_SERVER_URI -Dlog1.sink.route=$LOG1_SINK_SERVER_URI
-BUILD_RETURN_VALUE=$?
-
-popd
-
-delete_acceptance_test_components
-
-if [ "$BUILD_RETURN_VALUE" != 0 ]
-then
-    echo "Early exit due to test failure in partitioning tests"
-    duration=$SECONDS
-
-    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
-    delete_acceptance_test_infra
-    exit $BUILD_RETURN_VALUE
-fi
+#prepare_http_splitter_partitioned_log_with_kafka_binder
+#
+#pushd ../stream-applications-acceptance-tests
+#
+#../mvnw clean package -Dtest=PartitioningAcceptanceTests -Dmaven.test.skip=false -Dhttp.source.route=$HTTP_SOURCE_SERVER_URI -Dsplitter.processor.route=$SPLITTER_PROCESSOR_SERVER_URI -Dlog0.sink.route=$LOG0_SINK_SERVER_URI -Dlog1.sink.route=$LOG1_SINK_SERVER_URI
+#BUILD_RETURN_VALUE=$?
+#
+#popd
+#
+#delete_acceptance_test_components
+#
+#if [ "$BUILD_RETURN_VALUE" != 0 ]
+#then
+#    echo "Early exit due to test failure in partitioning tests"
+#    duration=$SECONDS
+#
+#    echo "Total time: Build took $(($duration / 60)) minutes and $(($duration % 60)) seconds to complete."
+#    delete_acceptance_test_infra
+#    exit $BUILD_RETURN_VALUE
+#fi
 
 prepare_http_router_log_with_kafka_binder
 
