@@ -2,10 +2,6 @@
 
 This repository contains extended testing for https://github.com/spring-cloud/stream-applications[stream applications].
 
-## Integration Tests
-
-Standalone integration tests for testing the various applications.
-
 ## Acceptance tests on Kubernetes
 
 We test a handful of stream pipelines standalone to ensure that they can be run on Kubernetes.
